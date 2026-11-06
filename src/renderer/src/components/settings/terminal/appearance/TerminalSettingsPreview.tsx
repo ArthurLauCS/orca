@@ -4,7 +4,10 @@ import { TerminalLigaturesAddon } from '@/lib/pane-manager/terminal-ligatures-ad
 import { Moon, Sun } from 'lucide-react'
 import '@xterm/xterm/css/xterm.css'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { buildDefaultTerminalOptions } from '@/lib/pane-manager/pane-terminal-options'
+import {
+  buildDefaultTerminalOptions,
+  resolveTerminalDrawBoldTextInBrightColors
+} from '@/lib/pane-manager/pane-terminal-options'
 import { buildFontFamily } from '@/lib/monospace-font-family'
 import { composeActiveTerminalTheme } from '@/components/terminal-pane/terminal-appearance'
 import { clampNumber, resolveEffectiveTerminalAppearance } from '@/lib/terminal-theme'
@@ -130,6 +133,9 @@ export function TerminalSettingsPreview({
       fontFamily: buildFontFamily(effectiveFontFamily),
       fontWeight: weights.fontWeight,
       fontWeightBold: weights.fontWeightBold,
+      drawBoldTextInBrightColors: resolveTerminalDrawBoldTextInBrightColors(
+        settings.terminalDrawBoldTextInBrightColors
+      ),
       lineHeight: terminalLineHeight,
       theme: composedTheme ?? undefined,
       allowTransparency:
@@ -176,6 +182,9 @@ export function TerminalSettingsPreview({
     terminal.options.fontFamily = buildFontFamily(effectiveFontFamily)
     terminal.options.fontWeight = weights.fontWeight
     terminal.options.fontWeightBold = weights.fontWeightBold
+    terminal.options.drawBoldTextInBrightColors = resolveTerminalDrawBoldTextInBrightColors(
+      settings.terminalDrawBoldTextInBrightColors
+    )
     terminal.options.lineHeight = terminalLineHeight
     terminal.options.cursorStyle = settings.terminalCursorStyle
     // Mirror shape for the permanently unfocused preview cursor.
@@ -184,6 +193,7 @@ export function TerminalSettingsPreview({
   }, [
     settings.terminalFontSize,
     settings.terminalFontWeightBold,
+    settings.terminalDrawBoldTextInBrightColors,
     effectiveFontFamily,
     settings.terminalFontWeight,
     terminalLineHeight,

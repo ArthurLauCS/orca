@@ -137,6 +137,8 @@ export type GlobalSettings = GlobalSettingsBase & {
    *  background-luminance-gated floor (3 dark / 4.5 light); 1 disables contrast correction so TUIs
    *  that rely on deliberately low contrast (Powerline seams, dimmed secondary text) render as sent. */
   terminalMinimumContrastRatio?: number
+  /** xterm drawBoldTextInBrightColors; undefined keeps xterm's default (on). Off keeps bold text in its own ANSI color. */
+  terminalDrawBoldTextInBrightColors?: boolean
   terminalPaddingX?: number
   terminalPaddingY?: number
   terminalMouseHideWhileTyping?: boolean

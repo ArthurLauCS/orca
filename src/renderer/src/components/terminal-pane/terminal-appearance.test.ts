@@ -198,6 +198,17 @@ describe('applyTerminalAppearance theme assignment', () => {
     expect(pane.terminal.options.scrollOnUserInput).toBe(false)
   })
 
+  it('applies bold-in-bright-colors from settings', () => {
+    const pane = makePane(1)
+    const settings = getDefaultSettings('/tmp')
+
+    apply(pane, settings)
+    expect(pane.terminal.options.drawBoldTextInBrightColors).toBe(true)
+
+    apply(pane, { ...settings, terminalDrawBoldTextInBrightColors: false })
+    expect(pane.terminal.options.drawBoldTextInBrightColors).toBe(false)
+  })
+
   it('applies regular and bold font weights independently', () => {
     const pane = makePane(1)
     const settings = getDefaultSettings('/tmp')
