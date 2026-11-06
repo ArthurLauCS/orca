@@ -24,6 +24,7 @@ import { handleElectronUpdaterProxyLogin } from './electron-updater-proxy-sessio
 import { resolveWindowsUpdateInstallDirectory } from './windows-update-install-directory'
 import type { PreQuitCleanupFailureMode, UpdateInstallMode } from './updater-state'
 import { isSelfUpdateEnabled } from '../local-build-updates'
+import { startLocalCustomSync } from '../local-custom-sync'
 
 export type UpdaterSetupOptions = {
   getMainWindow?: () => BrowserWindow | null
@@ -142,6 +143,7 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     }
 
     if (!isSelfUpdateEnabled()) {
+      startLocalCustomSync()
       return
     }
 
