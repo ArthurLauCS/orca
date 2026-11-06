@@ -19797,6 +19797,10 @@
         "idleStopSearchTimeout": "超时",
         "idleStopSearchKeepAlive": "保持活动",
         "idleStopNever": "从不"
+      },
+      "TerminalAdvancedTypographyControls": {
+        "boldTextInBrightColors": "粗体使用亮色",
+        "boldTextInBrightColorsDescription": "粗体文字使用对应 ANSI 颜色的亮色版本。关闭后保持原色，浅色主题下的黑色粗体不会变灰。"
       }
     },
     "agentChildRow": {

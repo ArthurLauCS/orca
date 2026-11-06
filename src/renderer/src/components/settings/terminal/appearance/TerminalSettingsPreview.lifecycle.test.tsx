@@ -116,7 +116,8 @@ vi.mock('@/components/ui/card', () => ({
 }))
 
 vi.mock('@/lib/pane-manager/pane-terminal-options', () => ({
-  buildDefaultTerminalOptions: () => ({ scrollback: 0 })
+  buildDefaultTerminalOptions: () => ({ scrollback: 0 }),
+  resolveTerminalDrawBoldTextInBrightColors: () => true
 }))
 
 vi.mock('@/lib/monospace-font-family', () => ({

@@ -15,10 +15,12 @@ import {
 import {
   NumberField,
   SettingsRow,
-  SettingsSegmentedControl
+  SettingsSegmentedControl,
+  SettingsSwitchRow
 } from '../../form-controls/SettingsFormControls'
 import { SearchableSetting } from '../../section-layout/SearchableSetting'
 import { clampNumber } from '@/lib/terminal-theme'
+import { resolveTerminalDrawBoldTextInBrightColors } from '@/lib/pane-manager/pane-terminal-options'
 import { translate } from '@/i18n/i18n'
 import { getTerminalAdvancedTypographySearchEntries } from './terminal-typography-search'
 
@@ -87,6 +89,39 @@ export function TerminalAdvancedTypographyControls({
           suffix="100-900"
           onChange={(value) =>
             updateSettings({ terminalFontWeightBold: normalizeTerminalFontWeightBold(value) })
+          }
+        />
+      </SearchableSetting>
+
+      <SearchableSetting
+        title={translate(
+          'components.settings.TerminalAdvancedTypographyControls.boldTextInBrightColors',
+          'Bold Text in Bright Colors'
+        )}
+        description={translate(
+          'components.settings.TerminalAdvancedTypographyControls.boldTextInBrightColorsDescription',
+          'Draw bold text in the bright variant of its ANSI color. Turn off to keep the original color, so bold black text stays dark on light themes.'
+        )}
+        keywords={['terminal', 'typography', 'bold', 'bright', 'color', 'ansi']}
+      >
+        <SettingsSwitchRow
+          label={translate(
+            'components.settings.TerminalAdvancedTypographyControls.boldTextInBrightColors',
+            'Bold Text in Bright Colors'
+          )}
+          description={translate(
+            'components.settings.TerminalAdvancedTypographyControls.boldTextInBrightColorsDescription',
+            'Draw bold text in the bright variant of its ANSI color. Turn off to keep the original color, so bold black text stays dark on light themes.'
+          )}
+          checked={resolveTerminalDrawBoldTextInBrightColors(
+            settings.terminalDrawBoldTextInBrightColors
+          )}
+          onChange={() =>
+            updateSettings({
+              terminalDrawBoldTextInBrightColors: !resolveTerminalDrawBoldTextInBrightColors(
+                settings.terminalDrawBoldTextInBrightColors
+              )
+            })
           }
         />
       </SearchableSetting>

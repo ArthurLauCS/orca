@@ -11,6 +11,7 @@ import {
   normalizeTerminalFastScrollSensitivity,
   normalizeTerminalScrollSensitivity,
   resolveTerminalCursorInactiveStyle,
+  resolveTerminalDrawBoldTextInBrightColors,
   resolveTerminalScrollOnUserInput
 } from '@/lib/pane-manager/pane-terminal-options'
 import { buildFontFamily } from '@/lib/monospace-font-family'
@@ -166,6 +167,9 @@ export function createTerminalPaneManagerOptions(
         ),
         scrollOnUserInput: resolveTerminalScrollOnUserInput(
           currentSettings?.terminalScrollOnUserInput
+        ),
+        drawBoldTextInBrightColors: resolveTerminalDrawBoldTextInBrightColors(
+          currentSettings?.terminalDrawBoldTextInBrightColors
         ),
         macOptionIsMeta: context.deps.effectiveMacOptionAsAltRef.current === 'true',
         lineHeight: normalizeTerminalLineHeight(currentSettings?.terminalLineHeight),
