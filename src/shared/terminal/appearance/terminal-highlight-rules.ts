@@ -81,8 +81,9 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
     pattern: String.raw`(?<![\w#&])#\d+\b|\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b`
   },
   metrics: {
-    hue: 'blue',
-    pattern: String.raw`\b\d+(?:\.\d+)?\s?(?:ms|s|sec|min|h|KB|MB|GB|KiB|MiB|GiB)\b|\b\d+(?:\.\d+)?%`
+    hue: 'yellow',
+    // List markers (1. or 1)) and standalone numbers (3,590,582, 1.4.248, 56.9 s, 86.1%), not digits inside words like v2 or x64.
+    pattern: String.raw`(?<=^\s*)\d+[.)](?=\s)|(?<![\w.])\d+(?:,\d{3})*(?:\.\d+)*(?:\s?(?:ms|s|sec|min|h|KB|MB|GB|KiB|MiB|GiB)\b|%)?(?!\w)`
   }
 }
 

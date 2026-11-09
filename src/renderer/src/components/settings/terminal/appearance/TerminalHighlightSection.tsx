@@ -74,7 +74,7 @@ function presetCopy(id: TerminalHighlightPresetId): { label: string; description
         label: translate('components.settings.TerminalHighlights.presetMetrics', 'Numbers'),
         description: translate(
           'components.settings.TerminalHighlights.presetMetricsDescription',
-          'Durations, sizes and percentages in blue.'
+          'Numbers, list markers, durations, sizes and percentages in yellow.'
         )
       }
   }
@@ -152,7 +152,7 @@ export function TerminalHighlightSection({
             )}
             description={translate(
               'components.settings.TerminalHighlights.claudeBlocksDescription',
-              'Colors each tool call and its output by tool: reads cyan, edits yellow, commands magenta, agents and skills blue, web green, failures red.'
+              'Colors each tool call and its output by tool: reads cyan, edits yellow, commands magenta, agents and skills blue, web green, failures red. Inline code in replies gets a soft background.'
             )}
             control={
               <SettingsSegmentedControl<TerminalClaudeBlockStyle>

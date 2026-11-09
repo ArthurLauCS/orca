@@ -9,6 +9,8 @@ export type ClaudeBlockCell = HighlightCell & {
   dim: boolean
   /** The program painted this background (diff lines, the prompt echo); row tints leave it. */
   ownBg: boolean
+  /** Drawn in Claude Code's inline-code color; replies give these runs a soft background. */
+  code: boolean
 }
 
 export type ClaudeBlockRow = {
@@ -18,7 +20,7 @@ export type ClaudeBlockRow = {
   wrapped?: boolean
 }
 
-export type ClaudeBlockPaint = 'header' | 'body' | 'tag' | 'bar' | 'prompt'
+export type ClaudeBlockPaint = 'header' | 'body' | 'tag' | 'bar' | 'prompt' | 'code'
 
 export type ClaudeBlockRange = {
   line: number
@@ -81,7 +83,8 @@ function isSummary(row: ClaudeBlockRow): boolean {
 
 /**
  * Marks Claude Code transcript blocks: a tool call line plus its indented output, up to the next
- * blank or unindented line. `rows` start at or above the block holding `fromLine`; ranges above
+ * blank or unindented line, and inline code in a reply, which runs from its bullet through blank
+ * and indented lines. `rows` start at or above the block holding `fromLine`; ranges above
  * `fromLine` are dropped.
  */
 export function findClaudeBlocks(
@@ -101,12 +104,18 @@ export function findClaudeBlocks(
       ranges.push({ line: row.line, x, width, hue, paint })
     }
   }
-  const tint = (row: ClaudeBlockRow, hue: TerminalHighlightHue, paint: ClaudeBlockPaint): void => {
+  /** Paints each run of cells that pass `test`. */
+  const paintRuns = (
+    row: ClaudeBlockRow,
+    hue: TerminalHighlightHue,
+    paint: ClaudeBlockPaint,
+    test: (cell: ClaudeBlockCell) => boolean
+  ): void => {
     let start = -1
     row.cells.forEach((cell, x) => {
-      if (!cell.ownBg && start < 0) {
+      if (test(cell) && start < 0) {
         start = x
-      } else if (cell.ownBg && start >= 0) {
+      } else if (!test(cell) && start >= 0) {
         push(row, start, x - start, hue, paint)
         start = -1
       }
@@ -115,12 +124,16 @@ export function findClaudeBlocks(
       push(row, start, row.cells.length - start, hue, paint)
     }
   }
+  const tint = (row: ClaudeBlockRow, hue: TerminalHighlightHue, paint: ClaudeBlockPaint): void =>
+    paintRuns(row, hue, paint, (cell) => !cell.ownBg)
 
   let hue: TerminalHighlightHue | null = null
+  let reply = false
   let afterBlank = true
   for (const row of rows) {
     const blank = row.cells.every(isSpace)
     if (row.bullet === 'tool' || row.bullet === 'failed' || (afterBlank && isSummary(row))) {
+      reply = false
       const name = toolName(row)
       hue =
         row.bullet === 'failed'
@@ -140,7 +153,12 @@ export function findClaudeBlocks(
       }
     } else {
       hue = null
-      if (row.cells[0]?.chars === '❯' && row.cells[0].ownBg) {
+      reply =
+        row.bullet === 'reply' ||
+        (reply && (blank || row.wrapped === true || isSpace(row.cells[0])))
+      if (reply) {
+        paintRuns(row, 'blue', 'code', (cell) => cell.code)
+      } else if (row.cells[0]?.chars === '❯' && row.cells[0].ownBg) {
         push(row, 0, 1, 'blue', 'prompt')
       }
     }

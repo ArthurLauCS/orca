@@ -20201,7 +20201,7 @@
         "presetReferences": "參照",
         "presetReferencesDescription": "Issue 和 PR 編號（#123）以及提交雜湊顯示為洋紅色。",
         "presetMetrics": "數字",
-        "presetMetricsDescription": "時長、大小和百分比顯示為藍色。",
+        "presetMetricsDescription": "數字、清單序號、時長、大小和百分比顯示為黃色。",
         "hueRed": "紅色",
         "hueYellow": "黃色",
         "hueGreen": "綠色",
@@ -20218,7 +20218,7 @@
         "invalidPattern": "不是有效的正規表示式，此規則會被略過。",
         "addRule": "新增規則",
         "claudeBlocks": "Claude Code 工具呼叫",
-        "claudeBlocksDescription": "依工具為每次呼叫和它的輸出上色：讀取為青色，修改為黃色，命令為洋紅色，子代理和技能為藍色，網路為綠色，失敗為紅色。",
+        "claudeBlocksDescription": "依工具為每次呼叫和它的輸出上色：讀取為青色，修改為黃色，命令為洋紅色，子代理和技能為藍色，網路為綠色，失敗為紅色；回覆裡的行內程式碼加淺色底。",
         "claudeBlocksTags": "標籤+邊條",
         "claudeBlocksRows": "整列底色",
         "claudeBlocksOff": "關閉"

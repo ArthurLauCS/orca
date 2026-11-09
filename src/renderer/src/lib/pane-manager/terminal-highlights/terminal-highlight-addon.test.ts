@@ -40,10 +40,13 @@ it('decorates plain matches with the theme color and skips text the program colo
   setTerminalHighlights(terminal, resolveTerminalHighlights({ enabled: true }))
   await vi.advanceTimersByTimeAsync(100)
 
-  expect(decorations(register)).toEqual([[1, 9, 6, '#ff5f5f', undefined]])
+  expect(decorations(register)).toEqual([
+    [1, 9, 6, '#ff5f5f', undefined],
+    [1, 7, 1, '#f5f543', undefined]
+  ])
 
   setTerminalHighlights(terminal, { rules: [], claudeBlocks: null })
-  expect(terminal.registerDecoration).toHaveBeenCalledTimes(1)
+  expect(terminal.registerDecoration).toHaveBeenCalledTimes(2)
 })
 
 // SGR as Claude Code emits it in its ANSI themes.
@@ -95,6 +98,36 @@ it('tags tool names and collapsed summaries, with a bar beside output, red for a
     [6, 2, 6, '#101010', '#ff0000'],
     [7, 2, 1, '#101010', '#ff0000'],
     [9, 2, 3, '#101010', '#ff00ff']
+  ])
+})
+
+it('gives inline code in a reply a soft background, across blank lines but not in tool calls', async () => {
+  const terminal = new Terminal({
+    cols: 30,
+    rows: 5,
+    allowProposedApi: true,
+    theme: { background: '#000000', brightBlue: '#6464ff' }
+  })
+  terminals.push(terminal)
+  await write(
+    terminal,
+    [
+      '\x1b[97m●\x1b[39m run \x1b[94mnpm test\x1b[39m',
+      '',
+      '  then \x1b[94mlint\x1b[39m',
+      '\x1b[92m●\x1b[39m \x1b[1mRead\x1b[22m(\x1b[94ma.ts\x1b[39m)'
+    ].join('\r\n')
+  )
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  vi.useFakeTimers()
+
+  setTerminalHighlights(terminal, { rules: [], claudeBlocks: 'tags' })
+  await vi.advanceTimersByTimeAsync(100)
+
+  expect(decorations(register)).toEqual([
+    [0, 6, 8, undefined, '#141433'],
+    [2, 7, 4, undefined, '#141433'],
+    [3, 2, 4, '#000000', '#29b8db']
   ])
 })
 

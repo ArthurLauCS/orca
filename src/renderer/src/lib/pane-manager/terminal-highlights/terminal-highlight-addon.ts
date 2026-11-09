@@ -33,6 +33,8 @@ const MAX_BLOCK_LOOKBACK = 300
 // Default, black, white, bright black, bright white: text a program did not color.
 const NEUTRAL_PALETTE_INDEXES = new Set([0, 7, 8, 15])
 const RED_PALETTE_INDEXES = new Set([1, 9])
+// Claude Code's ANSI themes draw inline code in bright blue.
+const CODE_PALETTE_INDEX = 12
 
 type Paint = { line: number; x: number; width: number; fg?: string; bg?: string }
 type Entry = Paint & { marker: IMarker; decoration: IDecoration }
@@ -79,6 +81,8 @@ function blockColors(
       return { bg: mixHex(hue, palette.background, palette.dark ? 0.22 : 0.16) }
     case 'body':
       return { bg: mixHex(hue, palette.background, palette.dark ? 0.08 : 0.06) }
+    case 'code':
+      return { bg: mixHex(hue, palette.background, palette.dark ? 0.2 : 0.14) }
     default:
       return { bg: hue, fg: palette.background }
   }
@@ -162,7 +166,8 @@ export class TerminalHighlightAddon implements ITerminalAddon {
         plain: isPlainCell(cell),
         bold: cell.isBold() !== 0,
         dim: cell.isDim() !== 0,
-        ownBg: !cell.isBgDefault()
+        ownBg: !cell.isBgDefault(),
+        code: cell.isFgPalette() && cell.getFgColor() === CODE_PALETTE_INDEX && !cell.isDim()
       })
     }
     const row: ClaudeBlockRow = { line: y, cells, wrapped: line.isWrapped }
@@ -172,7 +177,7 @@ export class TerminalHighlightAddon implements ITerminalAddon {
     return row
   }
 
-  /** The call line of the Claude Code block whose output reaches `from`; `from` when outside one. */
+  /** The bullet line of the Claude Code block (tool call or reply) that reaches `from`; `from` when outside one. */
   private blockStart(from: number): number {
     const buffer = this.terminal?.buffer.active
     for (let y = from - 1; buffer && y >= 0 && y >= from - MAX_BLOCK_LOOKBACK; y--) {
@@ -181,7 +186,8 @@ export class TerminalHighlightAddon implements ITerminalAddon {
       if (text.startsWith('●')) {
         return y
       }
-      if (!line || text.trim() === '' || !(line.isWrapped || text.startsWith(' '))) {
+      // Replies span blank lines; any other unindented line ends a block.
+      if (!line || !(line.isWrapped || text.startsWith(' ') || text === '')) {
         return from
       }
     }
