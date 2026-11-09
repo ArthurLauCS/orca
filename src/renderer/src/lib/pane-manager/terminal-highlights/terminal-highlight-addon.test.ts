@@ -49,6 +49,32 @@ it('decorates plain matches with the theme color and skips text the program colo
   expect(terminal.registerDecoration).toHaveBeenCalledTimes(2)
 })
 
+it('moves highlights with text a full-screen app rewrites in place, before any timer runs', async () => {
+  const terminal = new Terminal({
+    cols: 20,
+    rows: 3,
+    allowProposedApi: true,
+    theme: { background: '#101010', brightRed: '#ff5f5f' }
+  })
+  terminals.push(terminal)
+  await write(terminal, 'ok\r\nbuild error')
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  setTerminalHighlights(terminal, resolveTerminalHighlights({ enabled: true }))
+  await Promise.resolve()
+
+  // Full-screen apps such as Claude Code scroll by redrawing rows, not by moving the buffer.
+  await write(terminal, '\x1b[H\x1b[2Kan error\r\n\x1b[2Kfine')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+
+  const live = register.mock.calls
+    .filter((_, i) => {
+      const decoration = register.mock.results[i]?.value
+      return decoration && !decoration.isDisposed && !decoration.marker.isDisposed
+    })
+    .map(([options]) => [options.marker.line, options.x, options.width, options.foregroundColor])
+  expect(live).toEqual([[0, 3, 5, '#ff5f5f']])
+})
+
 // SGR as Claude Code emits it in its ANSI themes.
 const CLAUDE_TRANSCRIPT = [
   '\x1b[100m❯ \x1b[97mfix it\x1b[39m\x1b[49m',

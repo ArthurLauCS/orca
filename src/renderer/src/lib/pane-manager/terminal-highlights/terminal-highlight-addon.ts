@@ -25,8 +25,6 @@ import {
   type HighlightPalette
 } from './terminal-highlight-palette'
 
-// Coalesces scans while output streams; a scan covers only the viewport.
-const SCAN_DELAY_MS = 60
 const MAX_WRAPPED_ROWS = 8
 // A tool's output can start above the viewport; look this far up for its call line.
 const MAX_BLOCK_LOOKBACK = 300
@@ -98,16 +96,17 @@ export class TerminalHighlightAddon implements ITerminalAddon {
   private claudeBlocks: TerminalHighlightConfig['claudeBlocks'] = null
   private entries: Entry[] = []
   private listeners: IDisposable[] = []
-  private timer: ReturnType<typeof setTimeout> | null = null
+  private pending = false
 
   activate(terminal: Terminal): void {
     this.terminal = terminal
     this.listeners = [
-      terminal.onRender(() => this.schedule()),
-      terminal.onScroll(() => this.schedule()),
+      terminal.onWriteParsed(() => this.refresh()),
+      terminal.onScroll(() => this.refresh()),
+      terminal.onResize(() => this.refresh()),
       terminal.buffer.onBufferChange(() => {
         this.clear()
-        this.schedule()
+        this.refresh()
       })
     ]
   }
@@ -116,14 +115,26 @@ export class TerminalHighlightAddon implements ITerminalAddon {
     this.rules = compileTerminalHighlightRules(config.rules)
     this.claudeBlocks = config.claudeBlocks
     this.clear()
-    this.schedule()
+    this.refresh()
+  }
+
+  /**
+   * Rescans once the current task ends, before the next frame paints: full-screen apps (Claude
+   * Code, Codex) scroll by rewriting rows in place, so highlights left for a later frame would sit
+   * on the wrong text. Also used after a theme change.
+   */
+  refresh(): void {
+    if (this.pending || !this.terminal || this.idle) {
+      return
+    }
+    this.pending = true
+    queueMicrotask(() => {
+      this.pending = false
+      this.scan()
+    })
   }
 
   dispose(): void {
-    if (this.timer) {
-      clearTimeout(this.timer)
-      this.timer = null
-    }
     this.clear()
     this.listeners.forEach((listener) => listener.dispose())
     this.listeners = []
@@ -132,16 +143,6 @@ export class TerminalHighlightAddon implements ITerminalAddon {
 
   private get idle(): boolean {
     return this.rules.length === 0 && !this.claudeBlocks
-  }
-
-  private schedule(): void {
-    if (this.timer || !this.terminal || this.idle) {
-      return
-    }
-    this.timer = setTimeout(() => {
-      this.timer = null
-      this.scan()
-    }, SCAN_DELAY_MS)
   }
 
   private clear(): void {
@@ -287,7 +288,10 @@ export class TerminalHighlightAddon implements ITerminalAddon {
 
 const addons = new WeakMap<Terminal, { addon: TerminalHighlightAddon; signature: string }>()
 
-/** Applies highlight rules and Claude Code block marks to a terminal; nothing to apply removes the addon. */
+/**
+ * Applies highlight rules and Claude Code block marks to a terminal; nothing to apply removes the
+ * addon. Re-applying the same config (appearance updates) rescans so colors follow a new theme.
+ */
 export function setTerminalHighlights(terminal: Terminal, config: TerminalHighlightConfig): void {
   const current = addons.get(terminal)
   if (config.rules.length === 0 && !config.claudeBlocks) {
@@ -297,6 +301,7 @@ export function setTerminalHighlights(terminal: Terminal, config: TerminalHighli
   }
   const signature = JSON.stringify(config)
   if (current?.signature === signature) {
+    current.addon.refresh()
     return
   }
   let addon = current?.addon
