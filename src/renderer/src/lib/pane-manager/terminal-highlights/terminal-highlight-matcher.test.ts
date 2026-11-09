@@ -30,6 +30,14 @@ describe('findHighlightRanges', () => {
     ])
   })
 
+  it('colors status symbols', () => {
+    expect(findHighlightRanges([row(0, '✗ build ✓ lint ⚠ deps')], presets)).toEqual([
+      { line: 0, x: 0, width: 1, hue: 'red' },
+      { line: 0, x: 15, width: 1, hue: 'yellow' },
+      { line: 0, x: 8, width: 1, hue: 'green' }
+    ])
+  })
+
   it('leaves text the program already colored', () => {
     const colored = [0, 1, 2, 3, 4]
     expect(findHighlightRanges([row(0, 'error: boom', colored)], presets)).toEqual([])

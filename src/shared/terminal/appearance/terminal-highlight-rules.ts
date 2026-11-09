@@ -49,15 +49,15 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
 > = {
   errors: {
     hue: 'red',
-    pattern: String.raw`${NOT_ZERO}\b(?:error|errors|failed|failing|failure|fatal|exception|panic|denied|refused)\b|[✗✘]`
+    pattern: String.raw`${NOT_ZERO}\b(?:error|errors|failed|failing|failure|fatal|exception|panic|denied|refused)\b|[\u2717\u2718]`
   },
   warnings: {
     hue: 'yellow',
-    pattern: String.raw`${NOT_ZERO}\b(?:warn|warning|warnings|deprecated)\b|⚠`
+    pattern: String.raw`${NOT_ZERO}\b(?:warn|warning|warnings|deprecated)\b|\u26a0`
   },
   success: {
     hue: 'green',
-    pattern: String.raw`\b(?:passed|passing|success|successful|succeeded)\b|[✓✔]`
+    pattern: String.raw`\b(?:passed|passing|success|successful|succeeded)\b|[\u2713\u2714]`
   },
   paths: {
     hue: 'cyan',
