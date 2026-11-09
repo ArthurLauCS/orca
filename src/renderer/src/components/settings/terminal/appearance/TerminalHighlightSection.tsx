@@ -3,6 +3,7 @@ import type { GlobalSettings } from '../../../../../../shared/global-settings-ty
 import {
   TERMINAL_HIGHLIGHT_HUES,
   TERMINAL_HIGHLIGHT_PRESET_IDS,
+  type TerminalClaudeBlockStyle,
   type TerminalHighlightCustomRule,
   type TerminalHighlightHue,
   type TerminalHighlightPresetId,
@@ -12,6 +13,8 @@ import { Button } from '../../../ui/button'
 import { Input } from '../../../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select'
 import {
+  SettingsRow,
+  SettingsSegmentedControl,
   SettingsSubsectionHeader,
   SettingsSwitchRow
 } from '../../form-controls/SettingsFormControls'
@@ -142,6 +145,50 @@ export function TerminalHighlightSection({
 
       {current.enabled ? (
         <div className="divide-y divide-border/40">
+          <SettingsRow
+            label={translate(
+              'components.settings.TerminalHighlights.claudeBlocks',
+              'Claude Code Tool Calls'
+            )}
+            description={translate(
+              'components.settings.TerminalHighlights.claudeBlocksDescription',
+              'Colors each tool call and its output by tool: reads cyan, edits yellow, commands magenta, agents and skills blue, web green, failures red.'
+            )}
+            control={
+              <SettingsSegmentedControl<TerminalClaudeBlockStyle>
+                size="sm"
+                value={current.claudeBlocks ?? 'tags'}
+                onChange={(value) => update({ claudeBlocks: value })}
+                ariaLabel={translate(
+                  'components.settings.TerminalHighlights.claudeBlocks',
+                  'Claude Code Tool Calls'
+                )}
+                options={[
+                  {
+                    value: 'tags',
+                    label: translate(
+                      'components.settings.TerminalHighlights.claudeBlocksTags',
+                      'Name and Bar'
+                    )
+                  },
+                  {
+                    value: 'rows',
+                    label: translate(
+                      'components.settings.TerminalHighlights.claudeBlocksRows',
+                      'Tinted Rows'
+                    )
+                  },
+                  {
+                    value: 'off',
+                    label: translate(
+                      'components.settings.TerminalHighlights.claudeBlocksOff',
+                      'Off'
+                    )
+                  }
+                ]}
+              />
+            }
+          />
           {TERMINAL_HIGHLIGHT_PRESET_IDS.map((id) => {
             const copy = presetCopy(id)
             return (

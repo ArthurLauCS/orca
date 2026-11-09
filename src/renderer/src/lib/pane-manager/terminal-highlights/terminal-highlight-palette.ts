@@ -4,10 +4,14 @@ import {
   type TerminalHighlightHue
 } from '../../../../../shared/terminal/appearance/terminal-highlight-rules'
 
-export type HighlightPalette = Record<TerminalHighlightHue, string>
+export type HighlightPalette = {
+  hues: Record<TerminalHighlightHue, string>
+  background: string
+  dark: boolean
+}
 
 // xterm's default ANSI colors, for themes that leave a slot out.
-const FALLBACK: Record<'dark' | 'light', HighlightPalette> = {
+const FALLBACK: Record<'dark' | 'light', Record<TerminalHighlightHue, string>> = {
   dark: {
     red: '#f14c4c',
     yellow: '#f5f543',
@@ -49,14 +53,26 @@ function isDark(background: string | null): boolean {
 
 /** Highlight colors from the pane's theme, so rules follow the active palette. */
 export function resolveHighlightPalette(theme: ITheme | undefined): HighlightPalette {
-  const mode = isDark(toHex6(theme?.background)) ? 'dark' : 'light'
-  const palette = { ...FALLBACK[mode] }
+  const background = toHex6(theme?.background)
+  const dark = isDark(background)
+  const hues = { ...FALLBACK[dark ? 'dark' : 'light'] }
   for (const hue of TERMINAL_HIGHLIGHT_HUES) {
-    const slot = (
-      mode === 'dark' ? `bright${hue[0].toUpperCase()}${hue.slice(1)}` : hue
-    ) as keyof ITheme
+    const slot = (dark ? `bright${hue[0].toUpperCase()}${hue.slice(1)}` : hue) as keyof ITheme
     const value = theme?.[slot]
-    palette[hue] = toHex6(typeof value === 'string' ? value : undefined) ?? palette[hue]
+    hues[hue] = toHex6(typeof value === 'string' ? value : undefined) ?? hues[hue]
   }
-  return palette
+  return { hues, background: background ?? (dark ? '#000000' : '#ffffff'), dark }
+}
+
+/** `amount` of `color` laid over `background`; both #RRGGBB. */
+export function mixHex(color: string, background: string, amount: number): string {
+  return `#${[1, 3, 5]
+    .map((i) => {
+      const value = Number.parseInt(color.slice(i, i + 2), 16) * amount
+      const base = Number.parseInt(background.slice(i, i + 2), 16) * (1 - amount)
+      return Math.round(value + base)
+        .toString(16)
+        .padStart(2, '0')
+    })
+    .join('')}`
 }

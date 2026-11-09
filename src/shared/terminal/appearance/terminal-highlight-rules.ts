@@ -29,10 +29,20 @@ export const TERMINAL_HIGHLIGHT_PRESET_IDS = [
 ] as const
 export type TerminalHighlightPresetId = (typeof TERMINAL_HIGHLIGHT_PRESET_IDS)[number]
 
+/** How Claude Code tool calls are marked: a colored tool name plus a bar beside its output, or tinted rows. */
+export type TerminalClaudeBlockStyle = 'tags' | 'rows' | 'off'
+
 export type TerminalHighlightSettings = {
   enabled: boolean
   disabledPresets?: TerminalHighlightPresetId[]
   customRules?: TerminalHighlightCustomRule[]
+  /** Undefined = 'tags'. */
+  claudeBlocks?: TerminalClaudeBlockStyle
+}
+
+export type TerminalHighlightConfig = {
+  rules: TerminalHighlightRule[]
+  claudeBlocks: Exclude<TerminalClaudeBlockStyle, 'off'> | null
 }
 
 export type TerminalHighlightGlobalSettings = {
@@ -80,12 +90,12 @@ function isHue(value: unknown): value is TerminalHighlightHue {
   return (TERMINAL_HIGHLIGHT_HUES as readonly unknown[]).includes(value)
 }
 
-/** Rules to apply, in priority order (custom rules first); empty when highlighting is off. */
-export function resolveTerminalHighlightRules(
+/** Rules in priority order (custom rules first) and the Claude Code block style; nothing when highlighting is off. */
+export function resolveTerminalHighlights(
   settings: TerminalHighlightSettings | undefined
-): TerminalHighlightRule[] {
+): TerminalHighlightConfig {
   if (!settings?.enabled) {
-    return []
+    return { rules: [], claudeBlocks: null }
   }
   const disabled = new Set(settings.disabledPresets ?? [])
   const custom = (settings.customRules ?? []).filter(
@@ -99,5 +109,9 @@ export function resolveTerminalHighlightRules(
     id,
     ...TERMINAL_HIGHLIGHT_PRESETS[id]
   }))
-  return [...custom, ...presets]
+  return {
+    rules: [...custom, ...presets],
+    claudeBlocks:
+      settings.claudeBlocks === 'off' ? null : settings.claudeBlocks === 'rows' ? 'rows' : 'tags'
+  }
 }

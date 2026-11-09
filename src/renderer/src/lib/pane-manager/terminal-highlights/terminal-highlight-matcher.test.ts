@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveTerminalHighlightRules } from '../../../../../shared/terminal/appearance/terminal-highlight-rules'
+import { resolveTerminalHighlights } from '../../../../../shared/terminal/appearance/terminal-highlight-rules'
 import {
   compileTerminalHighlightRules,
   findHighlightRanges,
@@ -21,7 +21,7 @@ function row(line: number, text: string, colored: readonly number[] = []): Highl
   return { line, cells }
 }
 
-const presets = compileTerminalHighlightRules(resolveTerminalHighlightRules({ enabled: true }))
+const presets = compileTerminalHighlightRules(resolveTerminalHighlights({ enabled: true }).rules)
 
 describe('findHighlightRanges', () => {
   it('colors failure words but not a zero count', () => {
@@ -58,14 +58,14 @@ describe('findHighlightRanges', () => {
 
   it('gives custom rules priority and skips invalid patterns', () => {
     const rules = compileTerminalHighlightRules(
-      resolveTerminalHighlightRules({
+      resolveTerminalHighlights({
         enabled: true,
         disabledPresets: ['metrics'],
         customRules: [
           { id: 'bad', pattern: '(', hue: 'green' },
           { id: 'deploy', pattern: 'deploy failed', hue: 'yellow' }
         ]
-      })
+      }).rules
     )
     expect(findHighlightRanges([row(0, 'deploy failed in 3s')], rules)).toEqual([
       { line: 0, x: 0, width: 13, hue: 'yellow' }

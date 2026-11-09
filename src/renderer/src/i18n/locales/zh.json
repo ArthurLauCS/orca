@@ -19832,7 +19832,12 @@
         "color": "颜色",
         "removeRule": "删除规则",
         "invalidPattern": "不是有效的正则表达式，此规则会被跳过。",
-        "addRule": "添加规则"
+        "addRule": "添加规则",
+        "claudeBlocks": "Claude Code 工具调用",
+        "claudeBlocksDescription": "按工具给每次调用和它的输出上色：读取为青色，修改为黄色，命令为品红色，子代理和技能为蓝色，网络为绿色，失败为红色。",
+        "claudeBlocksTags": "标签+边条",
+        "claudeBlocksRows": "整行底色",
+        "claudeBlocksOff": "关闭"
       }
     },
     "agentChildRow": {

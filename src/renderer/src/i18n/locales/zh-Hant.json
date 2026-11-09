@@ -20216,7 +20216,12 @@
         "color": "顏色",
         "removeRule": "刪除規則",
         "invalidPattern": "不是有效的正規表示式，此規則會被略過。",
-        "addRule": "新增規則"
+        "addRule": "新增規則",
+        "claudeBlocks": "Claude Code 工具呼叫",
+        "claudeBlocksDescription": "依工具為每次呼叫和它的輸出上色：讀取為青色，修改為黃色，命令為洋紅色，子代理和技能為藍色，網路為綠色，失敗為紅色。",
+        "claudeBlocksTags": "標籤+邊條",
+        "claudeBlocksRows": "整列底色",
+        "claudeBlocksOff": "關閉"
       }
     },
     "agentChildRow": {
