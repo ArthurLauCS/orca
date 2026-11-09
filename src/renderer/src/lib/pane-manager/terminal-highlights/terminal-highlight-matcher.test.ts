@@ -1,0 +1,66 @@
+import { describe, expect, it } from 'vitest'
+import { resolveTerminalHighlightRules } from '../../../../../shared/terminal/appearance/terminal-highlight-rules'
+import {
+  compileTerminalHighlightRules,
+  findHighlightRanges,
+  type HighlightCell,
+  type HighlightRow
+} from './terminal-highlight-matcher'
+
+const WIDE = /[一-鿿]/
+
+function row(line: number, text: string, colored: readonly number[] = []): HighlightRow {
+  const cells: HighlightCell[] = []
+  for (const chars of text) {
+    const plain = !colored.includes(cells.length)
+    cells.push({ chars, width: WIDE.test(chars) ? 2 : 1, plain })
+    if (WIDE.test(chars)) {
+      cells.push({ chars: '', width: 0, plain })
+    }
+  }
+  return { line, cells }
+}
+
+const presets = compileTerminalHighlightRules(resolveTerminalHighlightRules({ enabled: true }))
+
+describe('findHighlightRanges', () => {
+  it('colors failure words but not a zero count', () => {
+    expect(findHighlightRanges([row(3, 'Tests: 2 failed, 0 errors')], presets)).toEqual([
+      { line: 3, x: 9, width: 6, hue: 'red' }
+    ])
+  })
+
+  it('leaves text the program already colored', () => {
+    const colored = [0, 1, 2, 3, 4]
+    expect(findHighlightRanges([row(0, 'error: boom', colored)], presets)).toEqual([])
+  })
+
+  it('splits a match across wrapped rows', () => {
+    expect(findHighlightRanges([row(10, 'see src/ma'), row(11, 'in.ts:42 ok')], presets)).toEqual([
+      { line: 10, x: 4, width: 6, hue: 'cyan' },
+      { line: 11, x: 0, width: 8, hue: 'cyan' }
+    ])
+  })
+
+  it('maps matches after wide characters to cell columns', () => {
+    expect(findHighlightRanges([row(0, '中文 error')], presets)).toEqual([
+      { line: 0, x: 5, width: 5, hue: 'red' }
+    ])
+  })
+
+  it('gives custom rules priority and skips invalid patterns', () => {
+    const rules = compileTerminalHighlightRules(
+      resolveTerminalHighlightRules({
+        enabled: true,
+        disabledPresets: ['metrics'],
+        customRules: [
+          { id: 'bad', pattern: '(', hue: 'green' },
+          { id: 'deploy', pattern: 'deploy failed', hue: 'yellow' }
+        ]
+      })
+    )
+    expect(findHighlightRanges([row(0, 'deploy failed in 3s')], rules)).toEqual([
+      { line: 0, x: 0, width: 13, hue: 'yellow' }
+    ])
+  })
+})

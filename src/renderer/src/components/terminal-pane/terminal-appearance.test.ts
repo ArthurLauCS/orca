@@ -154,6 +154,7 @@ describe('applyTerminalAppearance theme assignment', () => {
       // Real getPanes returns fresh wrappers around the same terminal; per-pane state must survive wrapper changes.
       getPanes: () => panes.map((pane) => ({ ...pane })),
       setPaneLigaturesEnabled: vi.fn(),
+      setPaneTerminalHighlights: vi.fn(),
       setPaneInlineImagesEnabled: vi.fn(),
       setPaneStyleOptions: vi.fn()
     } as unknown as PaneManager
@@ -436,6 +437,7 @@ describe('publishTerminalViewAttributesAtAppStart', () => {
       const manager = {
         getPanes: () => [],
         setPaneLigaturesEnabled: vi.fn(),
+        setPaneTerminalHighlights: vi.fn(),
         setPaneInlineImagesEnabled: vi.fn(),
         setPaneStyleOptions: vi.fn()
       } as unknown as PaneManager

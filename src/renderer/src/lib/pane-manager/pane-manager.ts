@@ -14,6 +14,8 @@ import { cancelActivePaneDrag, createDragReorderState, handlePaneDrop } from './
 import { beginPaneDragFromPointerDown } from './pane-drag-pointer'
 import { setLigaturesEnabled, disposePane } from './pane-lifecycle'
 import { setInlineImagesEnabled } from './pane-inline-images'
+import { setTerminalHighlights } from './terminal-highlights/terminal-highlight-addon'
+import type { TerminalHighlightRule } from '../../../../shared/terminal/appearance/terminal-highlight-rules'
 import { fitAllPanesInternal } from './pane-tree-ops'
 import { collectPublicPanes, toPublicPane } from './pane-public-view'
 import { applyTerminalGpuAcceleration } from './pane-terminal-gpu-acceleration'
@@ -245,6 +247,10 @@ export class PaneManager {
 
   setPaneInlineImagesEnabled(paneId: number, enabled: boolean): void {
     this.withPane(paneId, (pane) => setInlineImagesEnabled(pane, enabled))
+  }
+
+  setPaneTerminalHighlights(paneId: number, rules: readonly TerminalHighlightRule[]): void {
+    this.withPane(paneId, (pane) => setTerminalHighlights(pane.terminal, rules))
   }
 
   setPaneGpuRendering(paneId: number, enabled: boolean): void {
