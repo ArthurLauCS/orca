@@ -7,6 +7,7 @@ import {
 export type HighlightPalette = {
   hues: Record<TerminalHighlightHue, string>
   background: string
+  foreground: string
   dark: boolean
 }
 
@@ -61,7 +62,12 @@ export function resolveHighlightPalette(theme: ITheme | undefined): HighlightPal
     const value = theme?.[slot]
     hues[hue] = toHex6(typeof value === 'string' ? value : undefined) ?? hues[hue]
   }
-  return { hues, background: background ?? (dark ? '#000000' : '#ffffff'), dark }
+  return {
+    hues,
+    background: background ?? (dark ? '#000000' : '#ffffff'),
+    foreground: toHex6(theme?.foreground) ?? (dark ? '#ffffff' : '#000000'),
+    dark
+  }
 }
 
 /** `amount` of `color` laid over `background`; both #RRGGBB. */

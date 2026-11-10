@@ -108,7 +108,7 @@ async function claudeTerminal(): Promise<Terminal> {
   return terminal
 }
 
-it('tags tool names and collapsed summaries, with a bar beside output, red for a failed call', async () => {
+it('tints tool names, colors collapsed summaries and the ⎿ before output, red for a failed call', async () => {
   const terminal = await claudeTerminal()
   const register = vi.spyOn(terminal, 'registerDecoration')
   vi.useFakeTimers()
@@ -117,17 +117,44 @@ it('tags tool names and collapsed summaries, with a bar beside output, red for a
   await vi.advanceTimersByTimeAsync(100)
 
   expect(decorations(register)).toEqual([
-    [0, 0, 1, '#101010', '#0000ff'],
-    [2, 2, 4, '#101010', '#ff00ff'],
-    [3, 2, 1, '#101010', '#ff00ff'],
-    [4, 2, 1, '#101010', '#ff00ff'],
-    [6, 2, 6, '#101010', '#ff0000'],
-    [7, 2, 1, '#101010', '#ff0000'],
-    [9, 2, 3, '#101010', '#ff00ff']
+    [0, 0, 8, undefined, '#232323'],
+    [0, 0, 1, '#0000ff', undefined],
+    [2, 2, 4, '#ff00ff', '#360d36'],
+    [3, 2, 1, '#ff00ff', undefined],
+    [6, 2, 6, '#ff0000', '#360d0d'],
+    [7, 2, 1, '#ff0000', undefined],
+    [9, 2, 3, '#ff00ff', undefined]
   ])
 })
 
-it('gives inline code in a reply a soft background, across blank lines but not in tool calls', async () => {
+it('lays a neutral band under every prompt echo row, so a selection inside it shows', async () => {
+  const terminal = new Terminal({
+    cols: 20,
+    rows: 4,
+    allowProposedApi: true,
+    theme: { background: '#101010', foreground: '#f0f0f0', brightBlue: '#0000ff' }
+  })
+  terminals.push(terminal)
+  await write(
+    terminal,
+    ['\x1b[100m❯ fix the config  \x1b[49m', '\x1b[100m  loader please   \x1b[49m', '', 'next'].join(
+      '\r\n'
+    )
+  )
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  vi.useFakeTimers()
+
+  setTerminalHighlights(terminal, { rules: [], claudeBlocks: 'tags' })
+  await vi.advanceTimersByTimeAsync(100)
+
+  expect(decorations(register)).toEqual([
+    [0, 0, 18, undefined, '#222222'],
+    [0, 0, 1, '#0000ff', undefined],
+    [1, 0, 18, undefined, '#222222']
+  ])
+})
+
+it('gives inline code in a reply a neutral background, across blank lines but not in tool calls', async () => {
   const terminal = new Terminal({
     cols: 30,
     rows: 5,
@@ -151,9 +178,9 @@ it('gives inline code in a reply a soft background, across blank lines but not i
   await vi.advanceTimersByTimeAsync(100)
 
   expect(decorations(register)).toEqual([
-    [0, 6, 8, undefined, '#141433'],
-    [2, 7, 4, undefined, '#141433'],
-    [3, 2, 4, '#000000', '#29b8db']
+    [0, 6, 8, undefined, '#141414'],
+    [2, 7, 4, undefined, '#141414'],
+    [3, 2, 4, '#29b8db', '#071d23']
   ])
 })
 
@@ -166,7 +193,8 @@ it('tints whole rows of a tool block, stronger on the call line', async () => {
   await vi.advanceTimersByTimeAsync(100)
 
   expect(decorations(register)).toEqual([
-    [0, 0, 1, '#101010', '#0000ff'],
+    [0, 0, 8, undefined, '#232323'],
+    [0, 0, 1, '#0000ff', undefined],
     [2, 0, 40, undefined, '#450c45'],
     [3, 0, 40, undefined, '#230f23'],
     [4, 0, 40, undefined, '#230f23'],

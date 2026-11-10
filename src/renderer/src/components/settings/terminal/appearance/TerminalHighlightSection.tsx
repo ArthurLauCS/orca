@@ -168,7 +168,7 @@ export function TerminalHighlightSection({
                     value: 'tags',
                     label: translate(
                       'components.settings.TerminalHighlights.claudeBlocksTags',
-                      'Name and Bar'
+                      'Tool Names'
                     )
                   },
                   {

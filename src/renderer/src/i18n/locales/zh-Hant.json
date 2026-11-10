@@ -20499,7 +20499,7 @@
         "addRule": "新增規則",
         "claudeBlocks": "Claude Code 工具呼叫",
         "claudeBlocksDescription": "依工具為每次呼叫和它的輸出上色：讀取為青色，修改為黃色，命令為洋紅色，子代理和技能為藍色，網路為綠色，失敗為紅色；回覆裡的行內程式碼加淺色底。",
-        "claudeBlocksTags": "標籤+邊條",
+        "claudeBlocksTags": "工具名標籤",
         "claudeBlocksRows": "整列底色",
         "claudeBlocksOff": "關閉"
       }

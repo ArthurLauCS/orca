@@ -29,7 +29,7 @@ export const TERMINAL_HIGHLIGHT_PRESET_IDS = [
 ] as const
 export type TerminalHighlightPresetId = (typeof TERMINAL_HIGHLIGHT_PRESET_IDS)[number]
 
-/** How Claude Code tool calls are marked: a colored tool name plus a bar beside its output, or tinted rows. */
+/** How Claude Code tool calls are marked: a tinted tool name plus a colored ⎿ before its output, or tinted rows. */
 export type TerminalClaudeBlockStyle = 'tags' | 'rows' | 'off'
 
 export type TerminalHighlightSettings = {
@@ -72,7 +72,8 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
   paths: {
     hue: 'cyan',
     caseSensitive: true,
-    pattern: String.raw`(?:[A-Za-z]:[\\/]|~[\\/]|\/)?(?:[\w.@-]+[\\/])+[\w.@-]+\.[A-Za-z0-9]{1,8}(?::\d+(?::\d+)?)?|\b[\w.-]+\.[A-Za-z][A-Za-z0-9]{0,7}:\d+(?::\d+)?`
+    // URLs first, whole and without trailing punctuation, so their path part is not colored alone.
+    pattern: String.raw`\bhttps?:\/\/[\w\-.~:/?#@!$&*+,;=%]*[\w\-~/#=&%]|(?:[A-Za-z]:[\\/]|~[\\/]|\/)?(?:[\w.@-]+[\\/])+[\w.@-]+\.[A-Za-z0-9]{1,8}(?::\d+(?::\d+)?)?|\b[\w.-]+\.[A-Za-z][A-Za-z0-9]{0,7}:\d+(?::\d+)?`
   },
   references: {
     hue: 'magenta',

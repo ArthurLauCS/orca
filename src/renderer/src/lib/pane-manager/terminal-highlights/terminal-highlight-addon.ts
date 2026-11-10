@@ -69,6 +69,10 @@ function bulletOf(cell: IBufferCell): ClaudeBullet {
   return ((rgb >> 16) & 0xff) > 1.5 * Math.max((rgb >> 8) & 0xff, rgb & 0xff) ? 'failed' : 'tool'
 }
 
+/**
+ * Backgrounds stay a step below the selection: a hue tint behind text of the same hue, or a
+ * neutral surface, so marked text never reads as selected.
+ */
 function blockColors(
   paint: ClaudeBlockPaint,
   hue: string,
@@ -79,10 +83,13 @@ function blockColors(
       return { bg: mixHex(hue, palette.background, palette.dark ? 0.22 : 0.16) }
     case 'body':
       return { bg: mixHex(hue, palette.background, palette.dark ? 0.08 : 0.06) }
+    case 'tag':
+      return { bg: mixHex(hue, palette.background, palette.dark ? 0.16 : 0.12), fg: hue }
+    case 'band':
     case 'code':
-      return { bg: mixHex(hue, palette.background, palette.dark ? 0.2 : 0.14) }
+      return { bg: mixHex(palette.foreground, palette.background, palette.dark ? 0.08 : 0.06) }
     default:
-      return { bg: hue, fg: palette.background }
+      return { fg: hue }
   }
 }
 

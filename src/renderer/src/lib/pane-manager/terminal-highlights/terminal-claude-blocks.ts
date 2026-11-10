@@ -20,7 +20,19 @@ export type ClaudeBlockRow = {
   wrapped?: boolean
 }
 
-export type ClaudeBlockPaint = 'header' | 'body' | 'tag' | 'bar' | 'prompt' | 'code'
+/**
+ * `tag`: tinted tool name; `name`: colored tool name; `connector`: colored ⎿; `prompt`: colored ❯;
+ * `band` and `code`: neutral surface under the prompt echo and inline code; `header`/`body`: row tints.
+ */
+export type ClaudeBlockPaint =
+  | 'header'
+  | 'body'
+  | 'tag'
+  | 'name'
+  | 'connector'
+  | 'prompt'
+  | 'band'
+  | 'code'
 
 export type ClaudeBlockRange = {
   line: number
@@ -83,8 +95,8 @@ function isSummary(row: ClaudeBlockRow): boolean {
 
 /**
  * Marks Claude Code transcript blocks: a tool call line plus its indented output, up to the next
- * blank or unindented line, and inline code in a reply, which runs from its bullet through blank
- * and indented lines. `rows` start at or above the block holding `fromLine`; ranges above
+ * blank or unindented line; inline code in a reply, which runs from its bullet through blank and
+ * indented lines; and the prompt echo, the rows after ❯ that keep its background. `rows` start at or above the block holding `fromLine`; ranges above
  * `fromLine` are dropped.
  */
 export function findClaudeBlocks(
@@ -129,9 +141,13 @@ export function findClaudeBlocks(
 
   let hue: TerminalHighlightHue | null = null
   let reply = false
+  let echo = false
   let afterBlank = true
   for (const row of rows) {
     const blank = row.cells.every(isSpace)
+    // The prompt echo: Claude Code's ANSI themes give it the bright-black background, which many
+    // palettes also use for the selection, so a selection inside it would not show.
+    echo = row.cells[0]?.ownBg === true && (echo || row.cells[0].chars === '❯')
     if (row.bullet === 'tool' || row.bullet === 'failed' || (afterBlank && isSummary(row))) {
       reply = false
       const name = toolName(row)
@@ -143,23 +159,28 @@ export function findClaudeBlocks(
       if (style === 'rows') {
         tint(row, hue, 'header')
       } else {
-        push(row, NAME_COLUMN, name.width, hue, 'tag')
+        // Collapsed summaries are dimmed by Claude Code; dim text over a tint is hard to read.
+        push(row, NAME_COLUMN, name.width, hue, row.bullet ? 'tag' : 'name')
       }
     } else if (hue && !row.bullet && !blank && (row.wrapped || isSpace(row.cells[0]))) {
       if (style === 'rows') {
         tint(row, hue, 'body')
-      } else {
-        push(row, NAME_COLUMN, Math.max(1, row.cells[NAME_COLUMN]?.width ?? 1), hue, 'bar')
+      } else if (row.cells[NAME_COLUMN]?.chars === '⎿') {
+        push(row, NAME_COLUMN, 1, hue, 'connector')
       }
     } else {
       hue = null
       reply =
-        row.bullet === 'reply' ||
-        (reply && (blank || row.wrapped === true || isSpace(row.cells[0])))
+        !echo &&
+        (row.bullet === 'reply' ||
+          (reply && (blank || row.wrapped === true || isSpace(row.cells[0]))))
       if (reply) {
         paintRuns(row, 'blue', 'code', (cell) => cell.code)
-      } else if (row.cells[0]?.chars === '❯' && row.cells[0].ownBg) {
-        push(row, 0, 1, 'blue', 'prompt')
+      } else if (echo) {
+        paintRuns(row, 'blue', 'band', (cell) => cell.ownBg)
+        if (row.cells[0].chars === '❯') {
+          push(row, 0, 1, 'blue', 'prompt')
+        }
       }
     }
     afterBlank = blank

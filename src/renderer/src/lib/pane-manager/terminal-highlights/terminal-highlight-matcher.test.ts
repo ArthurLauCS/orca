@@ -69,6 +69,12 @@ describe('findHighlightRanges', () => {
     ])
   })
 
+  it('colors a URL as one range, without the punctuation after it', () => {
+    expect(findHighlightRanges([row(0, '见 https://github.com/a/b.js?x=1。')], presets)).toEqual([
+      { line: 0, x: 3, width: 29, hue: 'cyan' }
+    ])
+  })
+
   it('gives custom rules priority and skips invalid patterns', () => {
     const rules = compileTerminalHighlightRules(
       resolveTerminalHighlights({
