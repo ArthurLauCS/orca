@@ -21617,7 +21617,7 @@
         "presetReferences": "References",
         "presetReferencesDescription": "Issue and PR numbers (#123) and commit hashes in magenta.",
         "presetMetrics": "Numbers",
-        "presetMetricsDescription": "Numbers, list markers, durations, sizes and percentages in yellow.",
+        "presetMetricsDescription": "Numbers, list markers, durations, sizes and percentages in a soft yellow, except in dimmed text.",
         "hueRed": "Red",
         "hueYellow": "Yellow",
         "hueGreen": "Green",

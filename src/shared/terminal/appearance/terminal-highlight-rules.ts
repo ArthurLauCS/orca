@@ -15,6 +15,8 @@ export type TerminalHighlightRule = {
   pattern: string
   hue: TerminalHighlightHue
   caseSensitive?: boolean
+  /** For frequent tokens such as numbers: drawn half-way to the foreground and left alone in dimmed text. */
+  subtle?: boolean
 }
 
 export type TerminalHighlightCustomRule = TerminalHighlightRule & { enabled?: boolean }
@@ -72,8 +74,8 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
   paths: {
     hue: 'cyan',
     caseSensitive: true,
-    // URLs first, whole and without trailing punctuation, so their path part is not colored alone.
-    pattern: String.raw`\bhttps?:\/\/[\w\-.~:/?#@!$&*+,;=%]*[\w\-~/#=&%]|(?:[A-Za-z]:[\\/]|~[\\/]|\/)?(?:[\w.@-]+[\\/])+[\w.@-]+\.[A-Za-z0-9]{1,8}(?::\d+(?::\d+)?)?|\b[\w.-]+\.[A-Za-z][A-Za-z0-9]{0,7}:\d+(?::\d+)?`
+    // URLs first, whole and without trailing punctuation, so their path part is not colored alone; paths whole or not at all.
+    pattern: String.raw`\bhttps?:\/\/[\w\-.~:/?#@!$&*+,;=%]*[\w\-~/#=&%]|(?:[A-Za-z]:[\\/]|~[\\/]|\/)?(?:[\w.@-]+[\\/])+[\w.@-]+\.[A-Za-z0-9]{1,8}(?::\d+(?::\d+)?)?(?!\w|\.\w)|\b[\w.-]+\.[A-Za-z][A-Za-z0-9]{0,7}:\d+(?::\d+)?`
   },
   references: {
     hue: 'magenta',
@@ -83,8 +85,10 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
   },
   metrics: {
     hue: 'yellow',
-    // List markers (1. or 1)) and standalone numbers (3,590,582, 1.4.248, 56.9 s, 86.1%), not digits inside words like v2 or x64.
-    pattern: String.raw`(?<=^\s*)\d+[.)](?=\s)|(?<![\w.])\d+(?:,\d{3})*(?:\.\d+)*(?:\s?(?:ms|s|sec|min|h|KB|MB|GB|KiB|MiB|GiB)\b|%)?(?!\w)`
+    // Numbers are everywhere (line numbers, status lines, token counts); keep pure yellow for warnings.
+    subtle: true,
+    // List markers (1. or 1)) and standalone numbers (3,590,582, 1.4.248, 56.9 s, 1m, 11.8k, 86.1%), not digits inside words like v2 or x64.
+    pattern: String.raw`(?<=^\s*)\d+[.)](?=\s)|(?<![\w.])\d+(?:,\d{3})*(?:\.\d+)*(?:\s?(?:ms|s|sec|min|m|h|KB|MB|GB|KiB|MiB|GiB)\b|[kKM]\b|%)?(?!\w|\.\d)`
   }
 }
 

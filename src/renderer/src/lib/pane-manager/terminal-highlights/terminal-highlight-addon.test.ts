@@ -42,7 +42,7 @@ it('decorates plain matches with the theme color and skips text the program colo
 
   expect(decorations(register)).toEqual([
     [1, 9, 6, '#ff5f5f', undefined],
-    [1, 7, 1, '#f5f543', undefined]
+    [1, 7, 1, '#fafaa1', undefined]
   ])
 
   setTerminalHighlights(terminal, { rules: [], claudeBlocks: null })
@@ -127,7 +127,7 @@ it('tints tool names, colors collapsed summaries and the ⎿ before output, red 
   ])
 })
 
-it('lays a neutral band under every prompt echo row, so a selection inside it shows', async () => {
+it('lays a neutral band under every prompt echo row, around Claude Code’s own selection', async () => {
   const terminal = new Terminal({
     cols: 20,
     rows: 4,
@@ -137,9 +137,12 @@ it('lays a neutral band under every prompt echo row, so a selection inside it sh
   terminals.push(terminal)
   await write(
     terminal,
-    ['\x1b[100m❯ fix the config  \x1b[49m', '\x1b[100m  loader please   \x1b[49m', '', 'next'].join(
-      '\r\n'
-    )
+    [
+      '\x1b[100m❯ fix the config  \x1b[49m',
+      '\x1b[100m  loader \x1b[44mplease\x1b[100m   \x1b[49m',
+      '',
+      'next'
+    ].join('\r\n')
   )
   const register = vi.spyOn(terminal, 'registerDecoration')
   vi.useFakeTimers()
@@ -150,7 +153,39 @@ it('lays a neutral band under every prompt echo row, so a selection inside it sh
   expect(decorations(register)).toEqual([
     [0, 0, 18, undefined, '#222222'],
     [0, 0, 1, '#0000ff', undefined],
-    [1, 0, 18, undefined, '#222222']
+    [1, 0, 9, undefined, '#222222'],
+    [1, 15, 3, undefined, '#222222']
+  ])
+})
+
+it('leaves text under Claude Code’s own mouse selection in the program’s colors', async () => {
+  const terminal = new Terminal({
+    cols: 30,
+    rows: 3,
+    allowProposedApi: true,
+    theme: { background: '#101010', brightRed: '#ff5f5f', brightBlue: '#0000ff' }
+  })
+  terminals.push(terminal)
+  // Claude Code's ANSI themes paint a mouse selection with SGR 44.
+  await write(
+    terminal,
+    [
+      '\x1b[92m●\x1b[39m \x1b[1mSk\x1b[44mill\x1b[22m(x) \x1b[49m',
+      '  build \x1b[44merror\x1b[49m error'
+    ].join('\r\n')
+  )
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  vi.useFakeTimers()
+
+  setTerminalHighlights(
+    terminal,
+    resolveTerminalHighlights({ enabled: true, claudeBlocks: 'tags' })
+  )
+  await vi.advanceTimersByTimeAsync(100)
+
+  expect(decorations(register)).toEqual([
+    [1, 14, 5, '#ff5f5f', undefined],
+    [0, 2, 2, '#0000ff', '#0d0d36']
   ])
 })
 

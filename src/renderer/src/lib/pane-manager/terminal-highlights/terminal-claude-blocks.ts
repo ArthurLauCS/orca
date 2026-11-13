@@ -6,9 +6,13 @@ export type ClaudeBullet = 'reply' | 'tool' | 'failed'
 
 export type ClaudeBlockCell = HighlightCell & {
   bold: boolean
-  dim: boolean
-  /** The program painted this background (diff lines, the prompt echo); row tints leave it. */
+  /**
+   * The program painted this background (Claude Code's own mouse selection, diff lines, the prompt
+   * echo); its colors win over every mark but the echo band.
+   */
   ownBg: boolean
+  /** Bright black: the prompt echo of Claude Code's ANSI themes, which the band replaces. */
+  echoBg: boolean
   /** Drawn in Claude Code's inline-code color; replies give these runs a soft background. */
   code: boolean
 }
@@ -116,28 +120,27 @@ export function findClaudeBlocks(
       ranges.push({ line: row.line, x, width, hue, paint })
     }
   }
-  /** Paints each run of cells that pass `test`. */
+  /** Paints each run of cells in [from, to) that pass `test`; by default those the program left unpainted. */
   const paintRuns = (
     row: ClaudeBlockRow,
     hue: TerminalHighlightHue,
     paint: ClaudeBlockPaint,
-    test: (cell: ClaudeBlockCell) => boolean
+    test: (cell: ClaudeBlockCell) => boolean = (cell) => !cell.ownBg,
+    from = 0,
+    to = row.cells.length
   ): void => {
     let start = -1
-    row.cells.forEach((cell, x) => {
-      if (test(cell) && start < 0) {
+    const end = Math.min(to, row.cells.length)
+    for (let x = from; x <= end; x++) {
+      const on = x < end && test(row.cells[x])
+      if (on && start < 0) {
         start = x
-      } else if (!test(cell) && start >= 0) {
+      } else if (!on && start >= 0) {
         push(row, start, x - start, hue, paint)
         start = -1
       }
-    })
-    if (start >= 0) {
-      push(row, start, row.cells.length - start, hue, paint)
     }
   }
-  const tint = (row: ClaudeBlockRow, hue: TerminalHighlightHue, paint: ClaudeBlockPaint): void =>
-    paintRuns(row, hue, paint, (cell) => !cell.ownBg)
 
   let hue: TerminalHighlightHue | null = null
   let reply = false
@@ -146,7 +149,8 @@ export function findClaudeBlocks(
   for (const row of rows) {
     const blank = row.cells.every(isSpace)
     // The prompt echo: Claude Code's ANSI themes give it the bright-black background, which many
-    // palettes also use for the selection, so a selection inside it would not show.
+    // palettes also use for the selection, so a selection inside it would not show. Claude Code's
+    // own mouse selection repaints cells in another color; the band leaves those.
     echo = row.cells[0]?.ownBg === true && (echo || row.cells[0].chars === '❯')
     if (row.bullet === 'tool' || row.bullet === 'failed' || (afterBlank && isSummary(row))) {
       reply = false
@@ -157,16 +161,17 @@ export function findClaudeBlocks(
           : (TOOL_HUES.get(name.text) ??
             (row.cells[NAME_COLUMN]?.bold ? OTHER_TOOL_HUE : DESCRIBED_COMMAND_HUE))
       if (style === 'rows') {
-        tint(row, hue, 'header')
+        paintRuns(row, hue, 'header')
       } else {
         // Collapsed summaries are dimmed by Claude Code; dim text over a tint is hard to read.
-        push(row, NAME_COLUMN, name.width, hue, row.bullet ? 'tag' : 'name')
+        const paint = row.bullet ? 'tag' : 'name'
+        paintRuns(row, hue, paint, undefined, NAME_COLUMN, NAME_COLUMN + name.width)
       }
     } else if (hue && !row.bullet && !blank && (row.wrapped || isSpace(row.cells[0]))) {
       if (style === 'rows') {
-        tint(row, hue, 'body')
+        paintRuns(row, hue, 'body')
       } else if (row.cells[NAME_COLUMN]?.chars === '⎿') {
-        push(row, NAME_COLUMN, 1, hue, 'connector')
+        paintRuns(row, hue, 'connector', undefined, NAME_COLUMN, NAME_COLUMN + 1)
       }
     } else {
       hue = null
@@ -175,12 +180,10 @@ export function findClaudeBlocks(
         (row.bullet === 'reply' ||
           (reply && (blank || row.wrapped === true || isSpace(row.cells[0]))))
       if (reply) {
-        paintRuns(row, 'blue', 'code', (cell) => cell.code)
+        paintRuns(row, 'blue', 'code', (cell) => cell.code && !cell.ownBg)
       } else if (echo) {
-        paintRuns(row, 'blue', 'band', (cell) => cell.ownBg)
-        if (row.cells[0].chars === '❯') {
-          push(row, 0, 1, 'blue', 'prompt')
-        }
+        paintRuns(row, 'blue', 'band', (cell) => cell.echoBg)
+        paintRuns(row, 'blue', 'prompt', (cell) => cell.echoBg && cell.chars === '❯', 0, 1)
       }
     }
     afterBlank = blank

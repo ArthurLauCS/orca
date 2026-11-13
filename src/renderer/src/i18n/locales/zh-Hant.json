@@ -20481,7 +20481,7 @@
         "presetReferences": "參照",
         "presetReferencesDescription": "Issue 和 PR 編號（#123）以及提交雜湊顯示為洋紅色。",
         "presetMetrics": "數字",
-        "presetMetricsDescription": "數字、清單序號、時長、大小和百分比顯示為黃色。",
+        "presetMetricsDescription": "數字、清單序號、時長、大小和百分比顯示為柔和的黃色，暗色文字裡不上色。",
         "hueRed": "紅色",
         "hueYellow": "黃色",
         "hueGreen": "綠色",

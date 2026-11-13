@@ -31,8 +31,9 @@ const MAX_BLOCK_LOOKBACK = 300
 // Default, black, white, bright black, bright white: text a program did not color.
 const NEUTRAL_PALETTE_INDEXES = new Set([0, 7, 8, 15])
 const RED_PALETTE_INDEXES = new Set([1, 9])
-// Claude Code's ANSI themes draw inline code in bright blue.
+// Claude Code's ANSI themes draw inline code in bright blue and the prompt echo on bright black.
 const CODE_PALETTE_INDEX = 12
+const ECHO_BG_PALETTE_INDEX = 8
 
 type Paint = { line: number; x: number; width: number; fg?: string; bg?: string }
 type Entry = Paint & { marker: IMarker; decoration: IDecoration }
@@ -168,13 +169,17 @@ export class TerminalHighlightAddon implements ITerminalAddon {
       if (!line.getCell(x, cell)) {
         break
       }
+      const ownBg = !cell.isBgDefault()
+      const echoBg = cell.isBgPalette() && cell.getBgColor() === ECHO_BG_PALETTE_INDEX
       cells.push({
         chars: cell.getChars(),
         width: cell.getWidth(),
-        plain: isPlainCell(cell),
+        // Text on a background the program painted (Claude Code's mouse selection, diff lines) keeps its colors.
+        plain: isPlainCell(cell) && (!ownBg || echoBg),
         bold: cell.isBold() !== 0,
         dim: cell.isDim() !== 0,
-        ownBg: !cell.isBgDefault(),
+        ownBg,
+        echoBg,
         code: cell.isFgPalette() && cell.getFgColor() === CODE_PALETTE_INDEX && !cell.isDim()
       })
     }
@@ -238,7 +243,9 @@ export class TerminalHighlightAddon implements ITerminalAddon {
       } while (y < buffer.length && rows.length < MAX_WRAPPED_ROWS && buffer.getLine(y)?.isWrapped)
       if (this.rules.length > 0 && rows.length > 0 && rows[0].line >= matchFrom) {
         for (const range of findHighlightRanges(rows, this.rules)) {
-          add({ line: range.line, x: range.x, width: range.width, fg: palette.hues[range.hue] })
+          const hue = palette.hues[range.hue]
+          const fg = range.subtle ? mixHex(hue, palette.foreground, 0.5) : hue
+          add({ line: range.line, x: range.x, width: range.width, fg })
         }
       }
       if (this.claudeBlocks) {

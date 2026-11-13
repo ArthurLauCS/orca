@@ -74,7 +74,7 @@ function presetCopy(id: TerminalHighlightPresetId): { label: string; description
         label: translate('components.settings.TerminalHighlights.presetMetrics', 'Numbers'),
         description: translate(
           'components.settings.TerminalHighlights.presetMetricsDescription',
-          'Numbers, list markers, durations, sizes and percentages in yellow.'
+          'Numbers, list markers, durations, sizes and percentages in a soft yellow, except in dimmed text.'
         )
       }
   }

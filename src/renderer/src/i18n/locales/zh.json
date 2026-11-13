@@ -20078,7 +20078,7 @@
         "presetReferences": "引用",
         "presetReferencesDescription": "Issue 和 PR 编号（#123）以及提交哈希显示为品红色。",
         "presetMetrics": "数字",
-        "presetMetricsDescription": "数字、列表序号、时长、大小和百分比显示为黄色。",
+        "presetMetricsDescription": "数字、列表序号、时长、大小和百分比显示为柔和的黄色，暗色文字里不上色。",
         "hueRed": "红色",
         "hueYellow": "黄色",
         "hueGreen": "绿色",
