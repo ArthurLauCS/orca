@@ -9,7 +9,7 @@ import type { RateLimitState } from '../../../../../../shared/rate-limit-types'
 import { normalizeRuntimePathForComparison } from '../../../../../../shared/cross-platform-path'
 import { buildCodexResetCreditExpectedScope } from '../../../../../../shared/codex-reset-credit-scope'
 import { getSystemCodexHomePath } from '../../../../../codex/configuration/homes/codex-home-paths'
-import { getSelectedCodexAccountIdForTarget } from '../../../../../codex-accounts/runtime-selection'
+import { getSelectedCodexAccountIdForTarget } from '../../../../../codex-accounts/account-management/runtime-selection'
 import {
   isCodexMethodNotFoundError,
   isCodexAppServerUnsupportedError
@@ -82,10 +82,13 @@ export const STRUCTURED_AGENT_SESSION_ACCOUNT_USAGE_METHODS = [
     params: OptionsParams,
     handler: async ({ sessionId }, ctx): Promise<AgentSessionAccountUsage> => {
       const host = await requireInstalledStructuredHost(ctx, sessionId)
-      const record = host.deps.store.getRecord(sessionId)
-      if (!record || !supportsSessionAccountUsage(record)) {
+      const saved = host.deps.store.getRecord(sessionId)
+      if (!saved || !supportsSessionAccountUsage(saved)) {
         return { status: 'failed' }
       }
+      // The account the chat's next turn runs on, which a switch moves it to.
+      const accountHome = await host.deps.launchAccountHome?.(saved).catch(() => null)
+      const record = accountHome ? { ...saved, accountHome } : saved
       const abort = new AbortController()
       let timer: ReturnType<typeof setTimeout> | undefined
       try {

@@ -29,6 +29,7 @@ import { getFolderWorkspaceCardPrDisplay } from '../../workspace-card/review/fol
 import { FolderPathStatusIndicator } from './FolderPathStatusIndicator'
 import type { WorktreeItemRowContext } from './item-row'
 import type { FolderWorkspaceItemRow } from '../listing/renderable-rows'
+import type { LineageRowFrame } from '../listing/lineage-row-projection'
 import { forwardOptionPressToCardSurface, getWorktreeOptionId } from './option-dom'
 
 export type FolderWorkspaceRowContext = {
@@ -87,12 +88,13 @@ export function renderFolderWorkspaceOption(args: {
   ctx: FolderWorkspaceRowContext
   row: FolderWorkspaceItemRow
   vItem?: VirtualItem
+  frame?: LineageRowFrame
   measureVirtualRowElement?: (element: HTMLDivElement | null) => void
   lineage?: FolderRowLineage
   /** Inside a lineage group the group's frame paints the block; this only drops the group indent. */
   projectBlock: ProjectBlockFrame | null
 }): React.JSX.Element {
-  const { ctx, row, vItem, lineage } = args
+  const { ctx, row, vItem, lineage, frame } = args
   const folderWorktree = folderWorkspaceToWorktree(row.folderWorkspace)
   const folderWorktreeIdentity = getWorktreeHostIdentity(folderWorktree)
   const isActiveWorktree = isActiveSidebarWorkspace(folderWorktree, {
@@ -117,7 +119,7 @@ export function renderFolderWorkspaceOption(args: {
     prCache: ctx.prCache,
     settings: ctx.settings
   })
-  const { surfaceInset, cardContentIndent } = getFolderWorkspaceRowGeometry({
+  const geometry = getFolderWorkspaceRowGeometry({
     experimentalNewWorktreeCardStyle: ctx.newCardStyle,
     isFolderBackedWorkspaceChild:
       ctx.groupBy === 'repo' && row.projectGroup.createdFrom === 'folder-scan',
@@ -126,6 +128,8 @@ export function renderFolderWorkspaceOption(args: {
     groupDepth: args.projectBlock ? 0 : row.groupDepth,
     lineageDepth: row.depth
   })
+  const surfaceInset = frame?.left ?? geometry.surfaceInset
+  const cardContentIndent = frame?.contentIndent ?? geometry.cardContentIndent
   return (
     <div
       key={vItem?.key ?? row.key}
@@ -154,14 +158,12 @@ export function renderFolderWorkspaceOption(args: {
       onClickCapture={ctx.onRowClickCapture}
       onPointerDown={(event) => ctx.onRowPointerDown(event, folderWorktree, folderWorktreeIdentity)}
     >
-      <div
-        className="relative"
-        style={surfaceInset > 0 ? { paddingLeft: surfaceInset } : undefined}
-      >
+      <div className="relative" style={{ paddingLeft: surfaceInset, paddingRight: frame?.right }}>
         <WorktreeCard
           worktree={folderWorktree}
           repo={undefined}
           isActive={isActiveWorktree}
+          isMultiSelected={ctx.selectedWorktreeIds.has(folderWorktreeIdentity)}
           // A child-active folder looks active without the active card's side effects.
           isActiveSurface={lineage?.childIsActive === true || isActiveWorktree}
           isCurrentWorktree={ctx.currentWorktreeId === folderWorktree.id}
@@ -190,7 +192,10 @@ export function renderFolderWorkspaceOption(args: {
               ctx.nativeLineageDropTargetIdentity === folderWorktreeIdentity)
           )}
         />
-        <div className="pointer-events-auto absolute right-3 top-1.5">
+        <div
+          className="pointer-events-auto absolute right-3 top-1.5"
+          style={frame ? { right: frame.right + 12 } : undefined}
+        >
           <FolderPathStatusIndicator status={pathStatus} />
         </div>
       </div>

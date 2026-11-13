@@ -1,6 +1,6 @@
 import React from 'react'
 import { ChevronRight } from 'lucide-react'
-import type { WorktreeStatus } from '@/lib/worktree-status'
+import type { WorktreeStatus } from '../../../../../../shared/worktree-status-rollup'
 import StatusIndicator from '../../workspace-card/surface/StatusIndicator'
 import { useWorktreeActivityStatuses } from '../../workspace-card/activity/use-worktree-activity-statuses'
 import { STATUS_ORDER } from '../../workspace-card/identity/WorktreeLineageToggle'
