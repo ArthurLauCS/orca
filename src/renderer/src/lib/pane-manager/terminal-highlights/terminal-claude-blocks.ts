@@ -15,6 +15,8 @@ export type ClaudeBlockCell = HighlightCell & {
   echoBg: boolean
   /** Drawn in Claude Code's inline-code color; replies give these runs a soft background. */
   code: boolean
+  /** Drawn in palette red or green, as diff lines are. */
+  diffHue?: Extract<TerminalHighlightHue, 'red' | 'green'>
 }
 
 export type ClaudeBlockRow = {
@@ -26,7 +28,8 @@ export type ClaudeBlockRow = {
 
 /**
  * `tag`: tinted tool name; `name`: colored tool name; `connector`: colored ⎿; `prompt`: colored ❯;
- * `band` and `code`: neutral surface under the prompt echo and inline code; `header`/`body`: row tints.
+ * `band` and `code`: neutral surface under the prompt echo and inline code; `header`/`body`: row tints;
+ * `quoteBar`: solid bar under a quote's ▎; `diff`: tint under a diff line.
  */
 export type ClaudeBlockPaint =
   | 'header'
@@ -37,6 +40,8 @@ export type ClaudeBlockPaint =
   | 'prompt'
   | 'band'
   | 'code'
+  | 'quoteBar'
+  | 'diff'
 
 export type ClaudeBlockRange = {
   line: number
@@ -66,7 +71,11 @@ const DESCRIBED_COMMAND_HUE: TerminalHighlightHue = 'magenta'
 const NAME_COLUMN = 2
 const MAX_NAME_CELLS = 40
 
-const isSpace = (cell: ClaudeBlockCell | undefined): boolean => (cell?.chars || ' ') === ' '
+// The trailing half of a wide character has no chars but is not a space.
+const isSpace = (cell: ClaudeBlockCell | undefined): boolean =>
+  cell?.width !== 0 && (cell?.chars || ' ') === ' '
+// Claude Code draws a quote's bar as a dim ▎, one per nesting level.
+const isQuoteBar = (cell: ClaudeBlockCell): boolean => cell.chars === '▎' && cell.dim && !cell.ownBg
 
 /** The bold tool name ("Web Search"), else the first word of a summary line. */
 function toolName(row: ClaudeBlockRow): { text: string; width: number } {
@@ -97,11 +106,37 @@ function isSummary(row: ClaudeBlockRow): boolean {
   )
 }
 
+type DiffLine = { row: ClaudeBlockRow; hue: TerminalHighlightHue; first: number; end: number }
+
+/**
+ * A diff line (code blocks, `git diff`): "-" or "+" and the rest of its text in the same red or
+ * green; a wrapped row continues the diff line right above it. `first`/`end` bound its text.
+ */
+function diffLine(row: ClaudeBlockRow, above: DiffLine | undefined): DiffLine | null {
+  const first = row.cells.findIndex((cell) => !isSpace(cell))
+  const hue = row.cells[first]?.diffHue
+  const sign = row.cells[first]?.chars === '-' || row.cells[first]?.chars === '+'
+  const continues = row.wrapped && above?.hue === hue && above?.row.line === row.line - 1
+  if (!hue || !(sign || continues)) {
+    return null
+  }
+  let end = row.cells.length
+  while (end > first && isSpace(row.cells[end - 1])) {
+    end--
+  }
+  const text = row.cells.slice(first, end)
+  return text.every((cell) => isSpace(cell) || cell.diffHue === hue)
+    ? { row, hue, first, end }
+    : null
+}
+
 /**
  * Marks Claude Code transcript blocks: a tool call line plus its indented output, up to the next
  * blank or unindented line; inline code in a reply, which runs from its bullet through blank and
- * indented lines; and the prompt echo, the rows after ❯ that keep its background. `rows` start at or above the block holding `fromLine`; ranges above
- * `fromLine` are dropped.
+ * indented lines; the prompt echo, the rows after ❯ that keep its background; and, outside tool
+ * output and the echo, quote bars and diff lines (found by their cells, since Claude Code's
+ * full-screen view can scroll a reply's bullet away). `rows` start at or above the block holding
+ * `fromLine`; ranges above `fromLine` are dropped.
  */
 export function findClaudeBlocks(
   rows: readonly ClaudeBlockRow[],
@@ -140,6 +175,17 @@ export function findClaudeBlocks(
         start = -1
       }
     }
+  }
+
+  // Consecutive diff lines share their left and right edges, so the tints read as one block.
+  let diffRun: DiffLine[] = []
+  const paintDiffRun = (): void => {
+    const left = Math.min(...diffRun.map((line) => line.first))
+    const right = Math.max(...diffRun.map((line) => line.end)) + 2
+    for (const line of diffRun) {
+      paintRuns(line.row, line.hue, 'diff', undefined, left, right)
+    }
+    diffRun = []
   }
 
   let hue: TerminalHighlightHue | null = null
@@ -185,8 +231,20 @@ export function findClaudeBlocks(
         paintRuns(row, 'blue', 'band', (cell) => cell.echoBg)
         paintRuns(row, 'blue', 'prompt', (cell) => cell.echoBg && cell.chars === '❯', 0, 1)
       }
+      if (!echo) {
+        const text = row.cells.findIndex((cell) => !isSpace(cell) && !isQuoteBar(cell))
+        paintRuns(row, 'blue', 'quoteBar', isQuoteBar, 0, text === -1 ? undefined : text)
+      }
+      const diff = echo ? null : diffLine(row, diffRun.at(-1))
+      if (!diff || diffRun.at(-1)?.row.line !== row.line - 1) {
+        paintDiffRun()
+      }
+      if (diff) {
+        diffRun.push(diff)
+      }
     }
     afterBlank = blank
   }
+  paintDiffRun()
   return ranges
 }

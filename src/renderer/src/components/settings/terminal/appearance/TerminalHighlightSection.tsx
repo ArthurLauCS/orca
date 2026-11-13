@@ -69,12 +69,20 @@ function presetCopy(id: TerminalHighlightPresetId): { label: string; description
           'Issue and PR numbers (#123) and commit hashes in magenta.'
         )
       }
+    case 'lists':
+      return {
+        label: translate('components.settings.TerminalHighlights.presetLists', 'List Markers'),
+        description: translate(
+          'components.settings.TerminalHighlights.presetListsDescription',
+          '-, *, • and 1. at the start of a line in blue.'
+        )
+      }
     case 'metrics':
       return {
         label: translate('components.settings.TerminalHighlights.presetMetrics', 'Numbers'),
         description: translate(
           'components.settings.TerminalHighlights.presetMetricsDescription',
-          'Numbers, list markers, durations, sizes and percentages in a soft yellow, except in dimmed text.'
+          'Numbers, durations, sizes and percentages in a soft yellow, except in dimmed text.'
         )
       }
   }

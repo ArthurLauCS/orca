@@ -238,3 +238,68 @@ it('tints whole rows of a tool block, stronger on the call line', async () => {
     [9, 0, 40, undefined, '#450c45']
   ])
 })
+
+it('reads a bullet in the theme foreground as a reply, and tags a whole CJK command word', async () => {
+  const terminal = new Terminal({
+    cols: 30,
+    rows: 3,
+    allowProposedApi: true,
+    theme: { background: '#101010', foreground: '#cdd6f4', brightMagenta: '#ff00ff' }
+  })
+  terminals.push(terminal)
+  // Claude Code's synced truecolor themes draw the reply bullet in the theme foreground.
+  await write(
+    terminal,
+    [
+      '\x1b[38;2;205;214;244m●\x1b[39m 我先跑几次',
+      '\x1b[38;2;166;227;161m●\x1b[39m 列出 文件'
+    ].join('\r\n')
+  )
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  vi.useFakeTimers()
+
+  setTerminalHighlights(terminal, { rules: [], claudeBlocks: 'tags' })
+  await vi.advanceTimersByTimeAsync(100)
+
+  expect(decorations(register)).toEqual([[1, 2, 4, '#ff00ff', '#360d36']])
+})
+
+it('turns quote bars solid and tints a run of diff lines as one block', async () => {
+  const terminal = new Terminal({
+    cols: 30,
+    rows: 8,
+    allowProposedApi: true,
+    theme: {
+      background: '#000000',
+      brightRed: '#ff0000',
+      brightGreen: '#00ff00',
+      brightBlue: '#6464ff'
+    }
+  })
+  terminals.push(terminal)
+  await write(
+    terminal,
+    [
+      '  \x1b[2m▎\x1b[22m \x1b[3mquoted\x1b[23m',
+      '  \x1b[2m▎ ▎\x1b[22m nested',
+      '',
+      '  \x1b[31m- old line\x1b[39m',
+      '  \x1b[32m+ new\x1b[39m',
+      '    unchanged',
+      '  \x1b[31m-\x1b[39m not a diff line'
+    ].join('\r\n')
+  )
+  const register = vi.spyOn(terminal, 'registerDecoration')
+  vi.useFakeTimers()
+
+  setTerminalHighlights(terminal, { rules: [], claudeBlocks: 'tags' })
+  await vi.advanceTimersByTimeAsync(100)
+
+  expect(decorations(register)).toEqual([
+    [0, 2, 1, '#6464ff', '#282866'],
+    [1, 2, 1, '#6464ff', '#282866'],
+    [1, 4, 1, '#6464ff', '#282866'],
+    [3, 2, 12, undefined, '#290000'],
+    [4, 2, 12, undefined, '#002900']
+  ])
+})

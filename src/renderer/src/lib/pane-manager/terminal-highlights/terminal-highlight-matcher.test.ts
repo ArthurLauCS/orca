@@ -42,10 +42,14 @@ describe('findHighlightRanges', () => {
     expect(
       findHighlightRanges([row(0, '1) took 56.9 s, 3,590,582 rows, 86.1% v2 x64 11.8x')], presets)
     ).toEqual([
-      { line: 0, x: 0, width: 2, hue: 'yellow', subtle: true },
+      { line: 0, x: 0, width: 2, hue: 'blue' },
       { line: 0, x: 8, width: 6, hue: 'yellow', subtle: true },
       { line: 0, x: 16, width: 9, hue: 'yellow', subtle: true },
       { line: 0, x: 32, width: 5, hue: 'yellow', subtle: true }
+    ])
+    expect(findHighlightRanges([row(1, '  - 2 a-b')], presets)).toEqual([
+      { line: 1, x: 2, width: 1, hue: 'blue' },
+      { line: 1, x: 4, width: 1, hue: 'yellow', subtle: true }
     ])
   })
 

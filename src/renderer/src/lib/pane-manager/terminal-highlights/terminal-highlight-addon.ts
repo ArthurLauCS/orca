@@ -34,11 +34,19 @@ const RED_PALETTE_INDEXES = new Set([1, 9])
 // Claude Code's ANSI themes draw inline code in bright blue and the prompt echo on bright black.
 const CODE_PALETTE_INDEX = 12
 const ECHO_BG_PALETTE_INDEX = 8
+// Diff lines in code blocks and `git diff` output are drawn in red or green.
+const DIFF_HUES = new Map<number, ClaudeBlockCell['diffHue']>([
+  [1, 'red'],
+  [9, 'red'],
+  [2, 'green'],
+  [10, 'green']
+])
 
 type Paint = { line: number; x: number; width: number; fg?: string; bg?: string }
 type Entry = Paint & { marker: IMarker; decoration: IDecoration }
 
-function isPlainCell(cell: IBufferCell): boolean {
+/** `foreground`: the theme's foreground as 0xRRGGBB. */
+function isPlainCell(cell: IBufferCell, foreground: number): boolean {
   if (cell.isInverse()) {
     return false
   }
@@ -48,18 +56,19 @@ function isPlainCell(cell: IBufferCell): boolean {
   if (cell.isFgPalette()) {
     return NEUTRAL_PALETTE_INDEXES.has(cell.getFgColor())
   }
-  // Truecolor themes draw body text in gray RGB; colored RGB is the program's own emphasis.
+  // Truecolor themes draw body text in the theme's foreground (Claude Code's synced themes, whose
+  // foreground can be tinted) or a gray RGB; other RGB is the program's own emphasis.
   const rgb = cell.getFgColor()
   const channels = [(rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff]
-  return Math.max(...channels) - Math.min(...channels) <= 24
+  return rgb === foreground || Math.max(...channels) - Math.min(...channels) <= 24
 }
 
-function bulletOf(cell: IBufferCell): ClaudeBullet {
+function bulletOf(cell: IBufferCell, foreground: number): ClaudeBullet {
   // Claude Code dims the bullet of a running call and of collapsed summaries.
   if (cell.isDim()) {
     return 'tool'
   }
-  if (isPlainCell(cell)) {
+  if (isPlainCell(cell, foreground)) {
     return 'reply'
   }
   if (cell.isFgPalette()) {
@@ -89,6 +98,10 @@ function blockColors(
     case 'band':
     case 'code':
       return { bg: mixHex(palette.foreground, palette.background, palette.dark ? 0.08 : 0.06) }
+    case 'quoteBar':
+      return { bg: mixHex(hue, palette.background, palette.dark ? 0.4 : 0.3), fg: hue }
+    case 'diff':
+      return { bg: mixHex(hue, palette.background, palette.dark ? 0.16 : 0.14) }
     default:
       return { fg: hue }
   }
@@ -158,7 +171,7 @@ export class TerminalHighlightAddon implements ITerminalAddon {
     this.entries = []
   }
 
-  private readRow(y: number, cell: IBufferCell): ClaudeBlockRow | null {
+  private readRow(y: number, cell: IBufferCell, foreground: number): ClaudeBlockRow | null {
     const terminal = this.terminal
     const line = terminal?.buffer.active.getLine(y)
     if (!terminal || !line) {
@@ -175,17 +188,18 @@ export class TerminalHighlightAddon implements ITerminalAddon {
         chars: cell.getChars(),
         width: cell.getWidth(),
         // Text on a background the program painted (Claude Code's mouse selection, diff lines) keeps its colors.
-        plain: isPlainCell(cell) && (!ownBg || echoBg),
+        plain: isPlainCell(cell, foreground) && (!ownBg || echoBg),
         bold: cell.isBold() !== 0,
         dim: cell.isDim() !== 0,
         ownBg,
         echoBg,
-        code: cell.isFgPalette() && cell.getFgColor() === CODE_PALETTE_INDEX && !cell.isDim()
+        code: cell.isFgPalette() && cell.getFgColor() === CODE_PALETTE_INDEX && !cell.isDim(),
+        diffHue: cell.isFgPalette() && !ownBg ? DIFF_HUES.get(cell.getFgColor()) : undefined
       })
     }
     const row: ClaudeBlockRow = { line: y, cells, wrapped: line.isWrapped }
     if (cells[0]?.chars === '●' && line.getCell(0, cell)) {
-      row.bullet = bulletOf(cell)
+      row.bullet = bulletOf(cell, foreground)
     }
     return row
   }
@@ -214,6 +228,7 @@ export class TerminalHighlightAddon implements ITerminalAddon {
     }
     const buffer = terminal.buffer.active
     const palette = resolveHighlightPalette(terminal.options.theme)
+    const foreground = Number.parseInt(palette.foreground.slice(1), 16)
     const cell = buffer.getNullCell()
     const top = buffer.viewportY
     const bottom = Math.min(buffer.length - 1, top + terminal.rows - 1)
@@ -235,7 +250,7 @@ export class TerminalHighlightAddon implements ITerminalAddon {
     while (y <= bottom) {
       const rows: ClaudeBlockRow[] = []
       do {
-        const row = this.readRow(y, cell)
+        const row = this.readRow(y, cell, foreground)
         if (row) {
           rows.push(row)
         }

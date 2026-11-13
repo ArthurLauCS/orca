@@ -27,6 +27,7 @@ export const TERMINAL_HIGHLIGHT_PRESET_IDS = [
   'success',
   'paths',
   'references',
+  'lists',
   'metrics'
 ] as const
 export type TerminalHighlightPresetId = (typeof TERMINAL_HIGHLIGHT_PRESET_IDS)[number]
@@ -83,12 +84,18 @@ export const TERMINAL_HIGHLIGHT_PRESETS: Record<
     // Issue/PR numbers and commit hashes (hex with at least one digit and one letter).
     pattern: String.raw`(?<![\w#&])#\d+\b|\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b`
   },
+  lists: {
+    // Blue is the structure color, shared with Claude Code's quote bars.
+    hue: 'blue',
+    // A line's leading - * • 1. or 1), ahead of numbers so "1." stays whole.
+    pattern: String.raw`(?<=^\s*)(?:[-*\u2022]|\d+[.)])(?=\s)`
+  },
   metrics: {
     hue: 'yellow',
     // Numbers are everywhere (line numbers, status lines, token counts); keep pure yellow for warnings.
     subtle: true,
-    // List markers (1. or 1)) and standalone numbers (3,590,582, 1.4.248, 56.9 s, 1m, 11.8k, 86.1%), not digits inside words like v2 or x64.
-    pattern: String.raw`(?<=^\s*)\d+[.)](?=\s)|(?<![\w.])\d+(?:,\d{3})*(?:\.\d+)*(?:\s?(?:ms|s|sec|min|m|h|KB|MB|GB|KiB|MiB|GiB)\b|[kKM]\b|%)?(?!\w|\.\d)`
+    // Standalone numbers (3,590,582, 1.4.248, 56.9 s, 1m, 11.8k, 86.1%), not digits inside words like v2 or x64.
+    pattern: String.raw`(?<![\w.])\d+(?:,\d{3})*(?:\.\d+)*(?:\s?(?:ms|s|sec|min|m|h|KB|MB|GB|KiB|MiB|GiB)\b|[kKM]\b|%)?(?!\w|\.\d)`
   }
 }
 
