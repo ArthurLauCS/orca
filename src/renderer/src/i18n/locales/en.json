@@ -22460,6 +22460,10 @@
           "keywordDelete": "delete",
           "keywordMerged": "merged"
         }
+      },
+      "TerminalAdvancedTypographyControls": {
+        "boldTextInBrightColors": "Bold Text in Bright Colors",
+        "boldTextInBrightColorsDescription": "Draw bold text in the bright variant of its ANSI color. Turn off to keep the original color, so bold black text stays dark on light themes."
       }
     },
     "agentChildRow": {

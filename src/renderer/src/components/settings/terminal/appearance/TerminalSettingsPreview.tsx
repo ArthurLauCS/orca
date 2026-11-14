@@ -4,7 +4,10 @@ import { TerminalLigaturesAddon } from '@/lib/pane-manager/terminal-rendering/te
 import { Moon, Sun } from 'lucide-react'
 import '@xterm/xterm/css/xterm.css'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { buildDefaultTerminalOptions } from '@/lib/pane-manager/pane-terminal-options'
+import {
+  buildDefaultTerminalOptions,
+  resolveTerminalDrawBoldTextInBrightColors
+} from '@/lib/pane-manager/pane-terminal-options'
 import { buildFontFamily } from '../../../../../../shared/monospace-font-family'
 import {
   pluginFontFamilyWhenLoaded,
@@ -139,6 +142,9 @@ export function TerminalSettingsPreview({
       fontFamily: buildFontFamily(pluginFontFamilyWhenLoaded(effectiveFontFamily)),
       fontWeight: weights.fontWeight,
       fontWeightBold: weights.fontWeightBold,
+      drawBoldTextInBrightColors: resolveTerminalDrawBoldTextInBrightColors(
+        settings.terminalDrawBoldTextInBrightColors
+      ),
       lineHeight: terminalLineHeight,
       theme: composedTheme ?? undefined,
       allowTransparency:
@@ -185,6 +191,9 @@ export function TerminalSettingsPreview({
     terminal.options.fontFamily = buildFontFamily(pluginFontFamilyWhenLoaded(effectiveFontFamily))
     terminal.options.fontWeight = weights.fontWeight
     terminal.options.fontWeightBold = weights.fontWeightBold
+    terminal.options.drawBoldTextInBrightColors = resolveTerminalDrawBoldTextInBrightColors(
+      settings.terminalDrawBoldTextInBrightColors
+    )
     terminal.options.lineHeight = terminalLineHeight
     terminal.options.cursorStyle = settings.terminalCursorStyle
     // Mirror shape for the permanently unfocused preview cursor.
@@ -193,6 +202,7 @@ export function TerminalSettingsPreview({
   }, [
     settings.terminalFontSize,
     settings.terminalFontWeightBold,
+    settings.terminalDrawBoldTextInBrightColors,
     effectiveFontFamily,
     fontReady,
     settings.terminalFontWeight,

@@ -20485,6 +20485,10 @@
       },
       "repositoryHooks": {
         "availableEnvVars": "可用的環境變數"
+      },
+      "TerminalAdvancedTypographyControls": {
+        "boldTextInBrightColors": "粗體使用亮色",
+        "boldTextInBrightColorsDescription": "粗體文字使用對應 ANSI 顏色的亮色版本。關閉後保持原色，淺色主題下的黑色粗體不會變灰。"
       }
     },
     "agentChildRow": {

@@ -8,6 +8,7 @@ import {
   normalizeTerminalFastScrollSensitivity,
   normalizeTerminalScrollSensitivity,
   resolveTerminalCursorInactiveStyle,
+  resolveTerminalDrawBoldTextInBrightColors,
   resolveTerminalScrollOnUserInput
 } from '@/lib/pane-manager/pane-terminal-options'
 import { buildLocalConptyTerminalOptions } from '@/lib/pane-manager/terminal-protocol/windows-pty-compatibility'
@@ -38,6 +39,9 @@ export function buildPreviewAppearanceOptions(
       settings?.terminalFastScrollSensitivity
     ),
     scrollOnUserInput: resolveTerminalScrollOnUserInput(settings?.terminalScrollOnUserInput),
+    drawBoldTextInBrightColors: resolveTerminalDrawBoldTextInBrightColors(
+      settings?.terminalDrawBoldTextInBrightColors
+    ),
     lineHeight: normalizeTerminalLineHeight(settings?.terminalLineHeight),
     wordSeparator: settings?.terminalWordSeparator,
     // Why only 'true': 'left'/'right' are handled by the keydown policy, which needs Option composable at the xterm level.
