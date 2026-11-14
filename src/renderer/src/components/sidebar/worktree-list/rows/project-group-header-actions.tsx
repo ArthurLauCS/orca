@@ -23,7 +23,7 @@ import {
   stopRepoHeaderMenuEvent
 } from './header-event-guards'
 import { ProjectCollapseMenuItems } from './project-collapse-actions'
-import type { HostSectionRow } from '../../../../../../shared/sidebar-list/host-section-rows'
+import type { HostSectionRow } from '../../../../../../shared/sidebar-list/hosts/host-section-rows'
 
 export function ProjectGroupHeaderMenu({
   groupId,

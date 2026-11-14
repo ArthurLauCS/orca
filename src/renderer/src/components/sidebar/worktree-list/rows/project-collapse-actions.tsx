@@ -3,7 +3,7 @@ import { Activity } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { useTranslate } from '@/i18n/use-translate'
-import type { HostSectionRow } from '../../../../../../shared/sidebar-list/host-section-rows'
+import type { HostSectionRow } from '../../../../../../shared/sidebar-list/hosts/host-section-rows'
 import { selectWorktreeActivityStatuses } from '../../workspace-card/activity/use-worktree-activity-statuses'
 
 type ProjectHeaderEntry = {
