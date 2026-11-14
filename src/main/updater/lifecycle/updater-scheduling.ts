@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import { isMacInstallRequested } from '../mac-install/updater-mac-install'
 import { withUpdaterSpan } from '../../observability/instrumentation'
 import {
@@ -8,6 +7,7 @@ import {
 } from './updater-state'
 import { UpdaterCheckFailure } from './updater-check-failure'
 import { getDelayedUpdateWakeDelayMs } from '../releases/updater-release-delay'
+import { isSelfUpdateEnabled } from '../local-build-updates'
 
 export abstract class UpdaterScheduling extends UpdaterCheckFailure {
   protected getAutomaticRetryInterval(): number {
@@ -64,7 +64,7 @@ export abstract class UpdaterScheduling extends UpdaterCheckFailure {
     if (this.backgroundCheckLaunchPending || this.currentStatus.state === 'checking') {
       return false
     }
-    if (!app.isPackaged) {
+    if (!isSelfUpdateEnabled()) {
       this.sendStatus({ state: 'not-available' })
       return false
     }
