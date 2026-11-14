@@ -18,6 +18,7 @@ import { folderWorkspaceToWorktree } from '../../../../../../shared/folder-works
 import WorktreeCard from '../../workspace-card/surface/WorktreeCard'
 import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
 import { getVirtualRowTransform } from '../viewport/virtual-rows'
+import { getProjectBlockRowAttributes, type ProjectBlockFrame } from './project-block-frames'
 import {
   getFolderWorkspaceRowGeometry,
   getLineageChildrenInlineStyle,
@@ -77,6 +78,7 @@ export function renderFolderWorkspaceVirtualRow(args: {
   vItem: VirtualItem
   measureVirtualRowElement: (element: HTMLDivElement | null) => void
   lineage?: FolderRowLineage
+  projectBlock: ProjectBlockFrame | null
 }): React.JSX.Element {
   return renderFolderWorkspaceOption(args)
 }
@@ -89,6 +91,8 @@ export function renderFolderWorkspaceOption(args: {
   frame?: LineageRowFrame
   measureVirtualRowElement?: (element: HTMLDivElement | null) => void
   lineage?: FolderRowLineage
+  /** Inside a lineage group the group's frame paints the block; this only drops the group indent. */
+  projectBlock: ProjectBlockFrame | null
 }): React.JSX.Element {
   const { ctx, row, vItem, lineage, frame } = args
   const folderWorktree = folderWorkspaceToWorktree(row.folderWorkspace)
@@ -120,7 +124,8 @@ export function renderFolderWorkspaceOption(args: {
     isFolderBackedWorkspaceChild:
       ctx.groupBy === 'repo' && row.projectGroup.createdFrom === 'folder-scan',
     isGrouped: ctx.groupBy !== 'none',
-    groupDepth: row.groupDepth,
+    // Why: the project block frame already carries the group indent.
+    groupDepth: args.projectBlock ? 0 : row.groupDepth,
     lineageDepth: row.depth
   })
   const surfaceInset = frame?.left ?? geometry.surfaceInset
@@ -144,7 +149,9 @@ export function renderFolderWorkspaceOption(args: {
             'data-index': vItem.index,
             ref: args.measureVirtualRowElement,
             className: 'absolute left-0 right-0 top-0',
-            style: { transform: getVirtualRowTransform(vItem.start) }
+            ...getProjectBlockRowAttributes(args.projectBlock, {
+              transform: getVirtualRowTransform(vItem.start)
+            })
           }
         : { className: 'relative' })}
       onClick={forwardOptionPressToCardSurface}

@@ -7196,6 +7196,9 @@
           "inProgress": "進行中",
           "inReview": "審核中",
           "done": "已完成"
+        },
+        "projectCollapse": {
+          "expandActive": "只展開活躍專案"
         }
       },
       "shared": {

@@ -8083,6 +8083,9 @@
           "browseFolder": "Browse folder…",
           "cloneFromUrl": "Clone from URL…",
           "createNewProject": "Create new project…"
+        },
+        "projectCollapse": {
+          "expandActive": "Expand only active projects"
         }
       },
       "shared": {

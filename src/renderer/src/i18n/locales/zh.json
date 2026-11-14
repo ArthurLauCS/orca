@@ -6931,6 +6931,9 @@
           "browseFolder": "浏览文件夹…",
           "cloneFromUrl": "从 URL 克隆…",
           "createNewProject": "创建新项目…"
+        },
+        "projectCollapse": {
+          "expandActive": "只展开活跃项目"
         }
       },
       "shared": {

@@ -33,9 +33,9 @@ import { useWorktreeSidebarScrollSuppression } from './use-scroll-suppression'
 import { EMPTY_PROJECT_GROUPS, type VirtualizedWorktreeViewportProps } from './viewport-props'
 import { useWorktreeDropCommitContext } from '../drag/use-drop-commit-context'
 import { buildWorktreeVirtualRowContext } from './virtual-row-context'
-import type { RepoHeaderProjectActions } from '../rows/repo-header-project-actions'
-import { getRepoOwnerWorktreeVisibilityDefaults } from '../../../../store/slices/worktrees/listing/worktree-visibility-defaults-by-host'
+import { useRepoHeaderProjectActions } from './use-project-actions'
 import { renderWorktreeVirtualRow } from '../rows/virtual-row-dispatch'
+import { ProjectGroupGuides, useProjectBlockLayout } from '../rows/project-group-guides'
 
 const EMPTY_HOST_OPTIONS: NonNullable<VirtualizedWorktreeViewportProps['hostOptions']> = []
 
@@ -68,7 +68,6 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
   // Why: callback-ref only mutates scrollRef; state re-runs the scroll-to-top listener attach.
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null)
   const settings = useAppStore((s) => s.settings)
-  const worktreeVisibilityDefaultsByHost = useAppStore((s) => s.worktreeVisibilityDefaultsByHost)
   const lineageParentIdentities = useAppStore(selectSidebarLineageParentIdentities)
   const projectHeaderHostContexts = useProjectHeaderHostContexts({
     rows,
@@ -78,40 +77,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     projectGrouping: props.projectGrouping
   })
   const newCardStyle = settings?.experimentalNewWorktreeCardStyle === true
-  const {
-    handleOpenRepoSettings,
-    handleOpenWorktreeVisibility,
-    handleCreateGroupFromRepo,
-    handleMoveProjectToGroup,
-    handleRemoveProjectFromGroup,
-    handleRemoveProject,
-    handleCreateForRepo
-  } = props
-  // Why stable: a new object re-renders every project header's menu tree on each workspace switch.
-  const projectActions = useMemo<RepoHeaderProjectActions>(
-    () => ({
-      getWorktreeVisibilityDefaults: (repo) =>
-        getRepoOwnerWorktreeVisibilityDefaults(repo, settings, worktreeVisibilityDefaultsByHost),
-      onOpenRepoSettings: handleOpenRepoSettings,
-      onOpenWorktreeVisibility: handleOpenWorktreeVisibility,
-      onCreateGroupFromRepo: handleCreateGroupFromRepo,
-      onMoveProjectToGroup: handleMoveProjectToGroup,
-      onRemoveProjectFromGroup: handleRemoveProjectFromGroup,
-      onRemoveProject: handleRemoveProject,
-      onCreateForRepo: handleCreateForRepo
-    }),
-    [
-      settings,
-      worktreeVisibilityDefaultsByHost,
-      handleOpenRepoSettings,
-      handleOpenWorktreeVisibility,
-      handleCreateGroupFromRepo,
-      handleMoveProjectToGroup,
-      handleRemoveProjectFromGroup,
-      handleRemoveProject,
-      handleCreateForRepo
-    ]
-  )
+  const projectActions = useRepoHeaderProjectActions(props)
 
   const reveal = useSidebarRevealHighlight()
   const scrollSuppression = useWorktreeSidebarScrollSuppression(scrollRef)
@@ -127,6 +93,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
   )
 
   const renderRows = rows
+  const { frames: projectBlockFrames, guideSpans } = useProjectBlockLayout(renderRows)
   const { projection, activeFamilyRoots, firstHeaderIndex } = useLineageRowProjection({
     ...rowProps,
     newCardStyle
@@ -342,6 +309,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     projection,
     activeFamilyRoots,
     renderRows,
+    projectBlockFrames,
     firstHeaderIndex,
     virtualization,
     measureVirtualRowElement,
@@ -405,6 +373,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
           className="relative w-full"
           style={{ height: `${virtualization.virtualizer.getTotalSize()}px` }}
         >
+          <ProjectGroupGuides spans={guideSpans} virtualItems={virtualItems} />
           {renderWorktreeSidebarDropIndicators({
             headerDrag,
             worktreeDragState: runtime.worktreeDragState

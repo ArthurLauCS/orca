@@ -33,6 +33,11 @@ import { renderWorktreeSectionHeaderRow } from './SectionHeader'
 import type { SectionHeaderRowContext } from './section-header-row-context'
 import type { WorktreeRowDragState } from '../drag/row-state'
 import type { Translate } from '@/i18n/use-translate'
+import {
+  getProjectBlockRowAttributes,
+  hasProjectGroupExitGap,
+  type ProjectBlockFrame
+} from './project-block-frames'
 
 export type WorktreeVirtualRowContext = {
   dragUnitsByRow: ReadonlyMap<number, { identity: string }>
@@ -40,6 +45,7 @@ export type WorktreeVirtualRowContext = {
   projection: LineageRowProjection
   activeFamilyRoots: ReadonlySet<number>
   renderRows: RenderRow[]
+  projectBlockFrames: readonly (ProjectBlockFrame | null)[]
   firstHeaderIndex: number
   activeStickyHeaderIndexRef: React.MutableRefObject<number | null>
   activeStickyHostIndexRef: React.MutableRefObject<number | null>
@@ -124,6 +130,7 @@ export function renderWorktreeVirtualRow(
   vItem: VirtualItem,
   t?: Translate
 ): React.JSX.Element | null {
+  const projectBlock = ctx.projectBlockFrames[vItem.index] ?? null
   if (row.type === 'host-header') {
     return renderHostHeaderVirtualRow(ctx, row, vItem)
   }
@@ -141,7 +148,9 @@ export function renderWorktreeVirtualRow(
           index: vItem.index,
           firstHeaderIndex: ctx.firstHeaderIndex
         }),
-        measureVirtualRowElement: ctx.measureVirtualRowElement
+        hasGroupExitGap: hasProjectGroupExitGap(ctx.renderRows, vItem.index, null),
+        measureVirtualRowElement: ctx.measureVirtualRowElement,
+        projectBlock
       },
       t
     )
@@ -152,6 +161,7 @@ export function renderWorktreeVirtualRow(
       row,
       vItem,
       measureVirtualRowElement: ctx.measureVirtualRowElement,
+      projectBlock,
       actionStateByProjectId: ctx.importedWorktreeCardActionState,
       onShow: ctx.onShowImportedWorktrees,
       onKeepHidden: ctx.onKeepImportedWorktreesHidden
@@ -163,6 +173,7 @@ export function renderWorktreeVirtualRow(
       row,
       vItem,
       measureVirtualRowElement: ctx.measureVirtualRowElement,
+      projectBlock,
       actionState: ctx.newExternalWorktreeInboxActionState.get(row.repo.id),
       onReview: ctx.onOpenWorktreeVisibility,
       onSuppress: ctx.onOpenSuppressExternalWorktreeInbox
@@ -173,7 +184,8 @@ export function renderWorktreeVirtualRow(
     return renderPendingCreationVirtualRow({
       row,
       vItem,
-      measureVirtualRowElement: ctx.measureVirtualRowElement
+      measureVirtualRowElement: ctx.measureVirtualRowElement,
+      projectBlock
     })
   }
 
@@ -208,6 +220,12 @@ export function renderWorktreeVirtualRow(
     })
       ? ctx.item.getActiveSurfaceVariant(rootRow)
       : 'primary'
+  // Why: the project block frame already carries the group indent, so the family root sits at 0.
+  const blockInset = projectBlock ? rootFrame.left : 0
+  const rowFrame = blockInset > 0 ? { ...frame, left: frame.left - blockInset } : frame
+  const itemBlockAttributes = getProjectBlockRowAttributes(projectBlock, {
+    transform: getWorktreeVirtualRowTransform(vItem.start, itemPreviewOffset)
+  })
 
   return (
     <div
@@ -217,6 +235,7 @@ export function renderWorktreeVirtualRow(
       data-worktree-virtual-row-key={String(vItem.key)}
       data-worktree-virtual-row-start={vItem.start}
       data-index={vItem.index}
+      data-project-block={itemBlockAttributes['data-project-block']}
       ref={ctx.measureVirtualRowElement}
       data-workspace-status-drop-target={itemWorkspaceStatus ? '' : undefined}
       data-workspace-status={itemWorkspaceStatus ?? undefined}
@@ -226,9 +245,7 @@ export function renderWorktreeVirtualRow(
         ctx.worktreeDragState.draggingWorktreeId !== null &&
           'transition-transform duration-150 ease-out will-change-transform'
       )}
-      style={{
-        transform: getWorktreeVirtualRowTransform(vItem.start, itemPreviewOffset)
-      }}
+      style={itemBlockAttributes.style}
       onDragOver={
         itemWorkspaceStatus
           ? (event) => ctx.onWorkspaceStatusDragOver(event, itemWorkspaceStatus)
@@ -256,7 +273,7 @@ export function renderWorktreeVirtualRow(
               frame.end === vItem.index && vItem.index === rootFrame.end && 'rounded-b-lg border-b'
             )}
             style={{
-              left: rootFrame.left + 4,
+              left: rootFrame.left - blockInset + 4,
               right: rootFrame.right,
               top: 0,
               bottom: frame.after
@@ -268,13 +285,14 @@ export function renderWorktreeVirtualRow(
             ? renderFolderWorkspaceOption({
                 ctx: ctx.folderWorkspace,
                 row,
-                frame,
+                frame: rowFrame,
+                projectBlock,
                 lineage: { onToggle: folderLineageToggle(ctx, row), childIsActive: activeFamily }
               })
             : renderWorktreeItemRow(
                 ctx.item,
                 row,
-                frame,
+                rowFrame,
                 activeFamily && frame.root === vItem.index
               )}
         </div>
