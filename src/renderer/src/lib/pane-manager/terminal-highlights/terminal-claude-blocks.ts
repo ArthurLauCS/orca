@@ -109,13 +109,16 @@ function isSummary(row: ClaudeBlockRow): boolean {
 type DiffLine = { row: ClaudeBlockRow; hue: TerminalHighlightHue; first: number; end: number }
 
 /**
- * A diff line (code blocks, `git diff`): "-" or "+" and the rest of its text in the same red or
- * green; a wrapped row continues the diff line right above it. `first`/`end` bound its text.
+ * A diff line (code blocks, `git diff`): a red "-" or a green "+" and the rest of its text in the
+ * same hue; a wrapped row continues the diff line right above it. `first`/`end` bound its text.
+ * The sign must match its hue: a Lua or SQL comment ("-- note") is all green but no diff line.
  */
 function diffLine(row: ClaudeBlockRow, above: DiffLine | undefined): DiffLine | null {
   const first = row.cells.findIndex((cell) => !isSpace(cell))
   const hue = row.cells[first]?.diffHue
-  const sign = row.cells[first]?.chars === '-' || row.cells[first]?.chars === '+'
+  const sign =
+    (row.cells[first]?.chars === '-' && hue === 'red') ||
+    (row.cells[first]?.chars === '+' && hue === 'green')
   const continues = row.wrapped && above?.hue === hue && above?.row.line === row.line - 1
   if (!hue || !(sign || continues)) {
     return null

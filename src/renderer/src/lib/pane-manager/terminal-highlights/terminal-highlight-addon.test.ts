@@ -286,7 +286,8 @@ it('turns quote bars solid and tints a run of diff lines as one block', async ()
       '  \x1b[31m- old line\x1b[39m',
       '  \x1b[32m+ new\x1b[39m',
       '    unchanged',
-      '  \x1b[31m-\x1b[39m not a diff line'
+      '  \x1b[31m-\x1b[39m not a diff line',
+      '  \x1b[32m-- lua comment\x1b[39m'
     ].join('\r\n')
   )
   const register = vi.spyOn(terminal, 'registerDecoration')
