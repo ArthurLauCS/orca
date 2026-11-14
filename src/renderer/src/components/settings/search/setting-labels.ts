@@ -12,6 +12,7 @@ export const SETTING_LABELS: Partial<Record<keyof GlobalSettings, string>> = {
   terminalBackgroundOpacity: 'Background Opacity',
   terminalMinimumContrastRatio: 'Color Contrast',
   terminalDrawBoldTextInBrightColors: 'Bold Text in Bright Colors',
+  terminalHighlights: 'Text Highlighting',
   terminalCursorStyle: 'Cursor Style',
   terminalCursorBlink: 'Cursor Blink',
   terminalCursorOpacity: 'Cursor Opacity',

@@ -35,6 +35,7 @@ import { normalizeTerminalLineHeight } from '../../../../../shared/terminal/appe
 import { maybePushMode2031Flip } from '../emulation/terminal-mode-2031-replies'
 import { resolveTerminalMinimumContrastRatio } from '../../../../../shared/terminal-themes/terminal-contrast-correction'
 import { resolveTerminalInlineImagesEnabled } from '../../../../../shared/terminal/images/terminal-inline-images-settings'
+import { resolveTerminalHighlights } from '../../../../../shared/terminal/appearance/terminal-highlight-rules'
 import { windowBackdropActive } from '@/app-shell/appearance/window-backdrop'
 import { contrastRatio, hexToRgb, over, type Rgba } from '../../../../../shared/color/rgba-contrast'
 import { getTerminalFontSizeOverride } from './terminal-font-size-overrides'
@@ -180,6 +181,7 @@ export function applyTerminalAppearance(
     settings.terminalLigatures,
     settings.terminalFontFamily
   )
+  const highlights = resolveTerminalHighlights(settings.terminalHighlights)
 
   for (const pane of manager.getPanes()) {
     // Why value-gated: writing options.theme rebuilds the palette, discarding TUI OSC 4/10/11/12 mutations; skip on no-op change.
@@ -232,6 +234,7 @@ export function applyTerminalAppearance(
     // Why only 'true': 'left'/'right' are handled in the keydown policy, which needs Option composable at the xterm level.
     pane.terminal.options.macOptionIsMeta = effectiveMacOptionAsAlt === 'true'
     manager.setPaneLigaturesEnabled(pane.id, ligaturesEnabled)
+    manager.setPaneTerminalHighlights(pane.id, highlights)
     manager.setPaneInlineImagesEnabled(
       pane.id,
       resolveTerminalInlineImagesEnabled(settings.terminalInlineImages)

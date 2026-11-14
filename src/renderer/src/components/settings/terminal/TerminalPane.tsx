@@ -28,6 +28,8 @@ import { ManageSessionsSection } from './session-management/ManageSessionsSectio
 import { TerminalAdvancedSection } from './TerminalAdvancedSection'
 import { TerminalInteractionSection } from './TerminalInteractionSection'
 import { TerminalRenderingSection } from './appearance/TerminalRenderingSection'
+import { TerminalHighlightSection } from './appearance/TerminalHighlightSection'
+import { getTerminalHighlightSearchEntries } from './appearance/terminal-highlight-search'
 import { TerminalWindowsShellSection } from './platform/TerminalWindowsShellSection'
 import { TerminalWindowsAdministratorSection } from './platform/TerminalWindowsAdministratorSection'
 import { TerminalCustomShellInput } from './platform/TerminalCustomShellInput'
@@ -296,6 +298,13 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, getTerminalRenderingSearchEntries()) ? (
       <TerminalRenderingSection
         key="rendering"
+        settings={settings}
+        updateSettings={updateSettings}
+      />
+    ) : null,
+    matchesSettingsSearch(searchQuery, getTerminalHighlightSearchEntries()) ? (
+      <TerminalHighlightSection
+        key="highlights"
         settings={settings}
         updateSettings={updateSettings}
       />
